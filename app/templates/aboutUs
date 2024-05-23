@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f7f7;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        p {
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>About Us</h1>
+    </header>
+    <div class="container">
+        <h2>Our Story</h2>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam eget magna sit amet odio interdum faucibus. Proin sagittis, nisl a placerat consequat, ipsum lacus aliquet dui, id lobortis eros turpis vitae dolor. In hac habitasse platea dictumst.</p>
+        <h2>Our Mission</h2>
+        <p>Nulla facilisi. Integer vel lacus sit amet mi ultricies malesuada. Nam auctor orci justo, nec volutpat lectus rhoncus vel. Nulla facilisi. Duis sodales velit sit amet sapien ultricies, id fringilla justo tristique. </p>
+        <h2>Our Team</h2>
+        <p>Meet our amazing team of professionals dedicated to providing you with the best experience possible.</p>
+        <ul>
+            <li>John Doe - CEO</li>
+            <li>Jane Smith - Marketing Director</li>
+            <li>Michael Johnson - Head of Development</li>
+        </ul>
+    </div>
+    <a href="{{url_for('aboutUs')}}">Inicio> </a>
+</body>
+</html>
