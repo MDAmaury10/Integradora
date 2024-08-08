@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista de Productos</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .navbar-brand {
+            font-size: 2rem; /* Tamaño de letra más grande */
+            font-family: 'Comic Sans MS', cursive, sans-serif; /* Fuente llamativa */
+            font-weight: bold;
+            color: #28a745 !important; /* Cambia a un color verde atractivo */
+        }
+        .navbar {
+            background-color: #343a40; /* Fondo oscuro para la barra de navegación */
+        }
+        .navbar-nav .nav-link {
+            color: #fff !important;
+        }
+        .navbar-nav .nav-link:hover {
+            color: #28a745 !important; /* Cambia a verde al pasar el mouse */
+        }
+        .footer {
+            background-color: #343a40;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barra de navegación -->
+    <nav class="navbar navbar-expand-lg">
+        <a class="navbar-brand" href="#">Abarrotes Vicky</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('index')}}">Home <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('productos') }}">Productos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('categorias') }}">Categorías</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Ventas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('proveedores') }}">Proveedores</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('usuarios')}}">Usuarios</a>
+                </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <!-- Mostrar mensajes flash -->
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="alert alert-info">
+            {% for message in messages %}
+            <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Productos</h2>
+            <a href="{{ url_for('productos_crear') }}" class="btn btn-success">Agregar Producto</a>
+        </div>
+        <table class="table table-bordered">
+            <thead class="thead-light">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Precio</th>
+                    <th>Marca</th>
+                    <th>Existencia (Stock)</th>
+                    <th>Categoría</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if productos %}
+                {% for producto in productos %}
+                <tr>
+                    <td>{{ producto.nombre }}</td>
+                    <td>{{ producto.precio }}</td>
+                    <td>{{ producto.marca }}</td>
+                    <td>{{ producto.stock }}</td>
+                    <td>{{ producto.categoria }}</td>
+                    <td>
+                        <a href="{{ url_for('productos_detalles', id=producto.id_producto) }}" class="btn btn-info btn-sm">Detalles</a>
+                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" data-id="{{ producto.id_producto }}">Eliminar Producto</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">No hay productos disponibles</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <!-- Controles de paginación -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('productos', page=page-1) }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if page == p %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('productos', page=p) }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('productos', page=page+1) }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    ¿Estás seguro de que deseas eliminar este producto?
+                </div>
+                <div class="modal-footer">
+                    <form id="deleteForm" action="" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $('#deleteModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget) 
+            var id = button.data('id') 
+            var modal = $(this)
+            var form = modal.find('#deleteForm')
+            form.attr('action', '/productos/eliminar/' + id)
+        })
+    </script>
+
+    <!-- Pie de página -->
+    <footer class="footer text-center">
+        <div class="container">
+            <p>&copy; 2024 Abarrotes Vicky. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+</body>
+</html>
+

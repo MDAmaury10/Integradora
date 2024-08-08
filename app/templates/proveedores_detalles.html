@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Proveedor - Sistema de Punto de Venta</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .form-group input,
+        .form-group select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .form-group input[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        .form-group input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Editar Proveedor</h2>
+        <form action="{{ url_for('proveedores_actualizar', id=proveedores.0) }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="contacto">Contacto:</label>
+                <input type="email" id="contacto" name="contacto" value="{{ proveedores.1 }}" required>
+            </div>
+            <div class="form-group">
+                <label for="dia_pedido">Día de Pedido:</label>
+                <input type="date" id="dia_pedido" name="diaPedido" value="{{ proveedores.2 }}" required>
+            </div>
+            <div class="form-group">
+                <label for="dia_entrega">Día de Entrega:</label>
+                <input type="date" id="dia_entrega" name="diaEntrega" value="{{ proveedores.3 }}" required>
+            </div>
+            <div class="form-group">
+                <label for="total_pagado">Total Pagado:</label>
+                <input type="number" id="total_pagado" name="totalPago" value="{{ proveedores.4 }}" required step="0.01" min="0">
+            </div>
+            <div class="form-group">
+                <label for="producto">Producto:</label>
+                <select id="producto" name="producto" required>
+                    <option value="" disabled>Selecciona un producto</option>
+                    {% for producto in productos %}
+                        <option value="{{ producto[0] }}" {% if producto[0] == proveedores.id_producto %}selected{% endif %}>
+                            {{ producto[1] }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Actualizar Proveedor">
+            </div>
+        </form>
+    </div>
+</body>
+</html>

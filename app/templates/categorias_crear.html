@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Categoría - Sistema de Punto de Venta</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .form-group input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .form-group input[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        .form-group input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Registro de Categoría</h2>
+        <form action="{{url_for('categorias_nuevo')}}" method="post">
+            <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
+            <div class="form-group">
+                <label for="nombre_categoria">Nombre de la Categoría:</label>
+                <input type="text" id="nombre_categoria" placeholder="Ingresa el nombre de la categoría" name="nombre_categoria" required>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Registrar Categoría">
+            </div>
+        </form>
+    </div>
+</body>
+</html>
