@@ -6,6 +6,14 @@
     <title>Vista de Productos</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
         .navbar-brand {
             font-size: 2rem; /* Tamaño de letra más grande */
             font-family: 'Comic Sans MS', cursive, sans-serif; /* Fuente llamativa */
@@ -26,6 +34,9 @@
             color: white;
             padding: 20px 0;
             text-align: center;
+        }
+        .content {
+            flex: 1;
         }
     </style>
 </head>
@@ -65,7 +76,7 @@
         </div>
     </nav>
 
-    <div class="container mt-5">
+    <div class="container mt-5 content">
         <!-- Mostrar mensajes flash -->
         {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -175,11 +186,10 @@
     </script>
 
     <!-- Pie de página -->
-    <footer class="footer text-center">
+    <footer class="footer">
         <div class="container">
             <p>&copy; 2024 Abarrotes Vicky. Todos los derechos reservados.</p>
         </div>
     </footer>
 </body>
 </html>
-

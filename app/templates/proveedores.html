@@ -6,6 +6,13 @@
     <title>Vista de Proveedores</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        html, body {
+            height: 100%; /* Asegura que el HTML y el body ocupen toda la altura del navegador */
+            margin: 0; /* Elimina el margen predeterminado */
+        }
+        .content {
+            flex: 1; /* Hace que el contenido ocupe todo el espacio disponible antes de llegar al footer */
+        }
         .navbar-brand {
             font-size: 2rem; /* Tamaño de letra más grande */
             font-family: 'Comic Sans MS', cursive, sans-serif; /* Fuente llamativa */
@@ -26,10 +33,16 @@
             color: white; /* Texto en blanco */
             padding: 20px 0;
             text-align: center;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+        .pagination {
+            margin: 0;
         }
     </style>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <!-- Barra de navegación -->
     <nav class="navbar navbar-expand-lg">
         <a class="navbar-brand" href="#">Abarrotes Vicky</a>
@@ -65,7 +78,7 @@
         </div>
     </nav>
 
-    <div class="container mt-5">
+    <div class="container mt-5 content">
         <!-- Mostrar mensajes flash -->
         {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -89,6 +102,7 @@
                     <th>Día de entrega</th>
                     <th>Pago total</th>
                     <th>Producto</th>
+                    <th>Cantidad</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -101,6 +115,7 @@
                     <td>{{ proveedor.dia_entrega }}</td><!--dia de entrega--->
                     <td>{{ proveedor.total_pagado }}</td><!--pago total--->
                     <td>{{ proveedor.nombre }}</td><!--productos--->
+                    <td>{{ proveedor.cantidad_entregada }}</td>
                     <td>
                         <a href="{{ url_for('proveedores_detalles', id=proveedor.id_proveedor) }}" class="btn btn-info btn-sm">Detalles</a>
                         <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" data-id="{{ proveedor.id_proveedor }}">Eliminar Proveedor</button>
@@ -148,7 +163,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    ¿Estás seguro de que deseas eliminar este proveedor?
+                    ¿Estás seguro de que deseas eliminar este pedido?
                 </div>
                 <div class="modal-footer">
                     <form id="deleteForm" action="" method="post">

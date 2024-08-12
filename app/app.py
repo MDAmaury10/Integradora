@@ -11,15 +11,14 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from Models.ModelUser import ModelUser
 from Models.entitites.user import User
 
+
+
 app = Flask(__name__)
 csrf=CSRFProtect()
 
-import os
-
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'uploads')
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
+
 
 def get_db_connection():
     try:
@@ -66,6 +65,8 @@ def loguear():
         password=request.form['password']
         user=User(0, username, password, None, None)
         loged_user= ModelUser.login(get_db_connection(), user)
+        print(user.username)
+        print(loged_user)
 
         if loged_user != None :
             if loged_user.password:
@@ -287,7 +288,8 @@ def proveedores_crear():
     conn = get_db_connection()
     if conn:
         cur = conn.cursor()
-        cur.execute('SELECT id_producto, nombre FROM productos')
+        sql='SELECT id_producto, nombre FROM productos'
+        cur.execute(sql)
         productos = cur.fetchall()
         cur.close()
         conn.close()
@@ -319,8 +321,8 @@ def proveedores_nuevo():
 
     else:
 
-        flash('Error al crear el nuevo producto')
-        return redirect(url_for('productos'))
+        flash('Error al crear el nuevo proveedor')
+        return redirect(url_for('proveedores'))
 
 @app.route('/proveedores/detalles/<string:id>', methods=['GET', 'POST'])
 @login_required
@@ -511,11 +513,11 @@ def usuarios():
     else:
         flash('Error al conectar a la base de datos.')
         return redirect(url_for('index'))
-        
+            
 @app.route('/usuarios/crear')
 @login_required
 def usuarios_crear():
-    return render_template('usuarios_crear.html')
+        return render_template('usuarios_crear.html')
 
 @app.route('/usuarios/nuevo', methods=['POST'])
 @login_required
@@ -560,7 +562,6 @@ def usuarios_nuevo():
         flash('Error al crear al nuevo usuario')
         return redirect(url_for('usuarios'))
 
-
     
 @app.route('/usuarios/detalles/<string:id>', methods=['GET'])
 @login_required
@@ -582,9 +583,9 @@ def usuarios_editar(id):
     titulo = 'Detalles del usuario'
     conn=get_db_connection()
     cur=conn.cursor()
-    sql=('SELECT * FROM USUARIOS WHERE id_usuario=%s', (id,))
-    cur.execute(sql, id)
-    usuarios=cur.fetchall()
+    sql = 'SELECT * FROM USUARIOS WHERE id_usuario=%s'
+    cur.execute(sql, (id,))
+    usuarios=cur.fetchone()
     conn.commit()
     cur.close()
     conn.close()
@@ -601,8 +602,8 @@ def usuarios_actualizar(id):
         hashed_password = generate_password_hash(password)
         conn=get_db_connection()
         cur=conn.cursor()
-        sql='UPDATE usuarios SET name=%s, password=%s, rol=%s, activo=%s WHERE id_usuario=%s'
-        values=(name, password, rol, active, id)
+        sql = 'UPDATE usuarios SET name=%s, password=%s, rol=%s, activo=%s WHERE id_usuario=%s'
+        values = (name, hashed_password, rol, active, id)
         cur.execute(sql, values)
         conn.commit()
         cur.close()
@@ -626,6 +627,80 @@ def usuarios_eliminar(id):
     conn.close()
     flash('¡Usuario eliminado de manera correcta!')
     return redirect(url_for('usuarios'))    
+
+
+@app.route ('/ventas')
+@login_required
+def ventas():
+    conn=get_db_connection()
+    if conn:
+        cur = conn.cursor()
+        sql_count='SELECT COUNT (*) FROM ventas'
+        sql_lim='SELECT * FROM ventas'
+        ventas, page, per_page, total_items, total_pages = paginador(sql_count, sql_lim, in_page=1, per_pages=10)
+        cur.close()
+        conn.close()
+        return render_template('ventas.html', ventas=ventas, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
+    else:
+        flash('Error al conectar a la base de datos')
+        return redirect(url_for('index'))
+
+
+@app.route('/ventas/crear')
+@login_required
+def ventas_crear():
+    conn=get_db_connection()
+    if conn:
+        cur=conn.cursor()
+        sql='SELECT id_producto, nombre from productos'
+        cur.execute(sql)
+        productos=cur.fetchall()
+        cur.close()
+        conn.close()
+        return render_template ('ventas_crear.html', productos=productos)
+    else:
+        flash('Error al conectar a la base de datos.')
+        return redirect(url_for('index'))
+
+@app.route('/ventas/nuevo', methods= ['POST'])
+@login_required
+def ventas_nuevo():
+    productos
+    if request.method == 'POST':
+        #repetir las veces necesarias
+        x=request.form[x]
+        conn=get_db_connection()
+        cur=conn.cursor()
+        sql=''
+        values=()
+        cur.execute(sql, values)
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        flash('Venta realizada de manera correcta')
+        return redirect(url_for('ventas_crear', productos=productos))
+    else:
+        flash('Error al conectar a la base de datos')
+        return redirect(url_for('ventas_crear'))
+    
+
+
+##    if conn:
+  #      conn=get_db_connection()
+#        cur=conn.cursor()
+   #     sql_count='SELECT COUNT (*) FROM ventas'
+    #    sql_lim='SELECT * FROM ventas'
+     #   ventas, page, per_page, total_items, total_pages = paginador(sql_count, sql_lim, in_page=1, per_pages=10)
+      #  cur.close
+       # conn.close
+        #return render_template('ventas.html', ventas=ventas, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
+   # else:
+    #    flash('Error al conectar a la base de datos')
+     #   return redirect (url_for('index'))
+
+
+
 
 
 

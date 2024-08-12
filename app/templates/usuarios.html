@@ -6,6 +6,15 @@
     <title>Vista de Usuarios</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1;
+        }
         .navbar-brand {
             font-size: 2rem; /* Tamaño de letra más grande */
             font-family: 'Comic Sans MS', cursive, sans-serif; /* Fuente llamativa */
@@ -85,7 +94,7 @@
                 <tr>
                     <th>Imagen</th>
                     <th>Nombre</th>
-                    <th>Contraseña</th>
+                    <!--    <th>Contraseña</th>-->
                     <th>Rol</th>
                     <th>Activo</th>
                     <th>Acciones</th>
@@ -103,8 +112,7 @@
                         {% endif %}
                     </td>
                     <td>{{ usuario.name }}</td>
-                    <td>{{ usuario.1 }}</td>
-                    <td>{{ usuario.rol }}</td>
+                    <td>{{ usuario.rol}}</td>
                     <td>{{ 'Sí' if usuario.activo else 'No' }}</td>
                     
                     <td>

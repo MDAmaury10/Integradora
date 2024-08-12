@@ -4,12 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Formulario de Usuario - Sistema de Punto de Venta</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
         body {
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
-            margin: 0;
-            padding: 20px;
         }
         .container {
             max-width: 600px;
@@ -17,6 +22,7 @@
             background: #fff;
             padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            flex: 1; /* Permite que el contenedor ocupe el espacio restante */
         }
         h2 {
             text-align: center;
@@ -50,20 +56,78 @@
         .form-group input[type="checkbox"] {
             width: auto;
         }
+        .navbar-brand {
+            font-size: 2rem;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-weight: bold;
+            color: #28a745 !important;
+        }
+        .navbar {
+            background-color: #343a40;
+        }
+        .navbar-nav .nav-link {
+            color: #fff !important;
+        }
+        .navbar-nav .nav-link:hover {
+            color: #28a745 !important;
+        }
+        .footer {
+            background-color: #343a40;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            width: 100%;
+            margin-top: auto; /* Asegura que el footer esté al final */
+        }
     </style>
 </head>
 <body>
+    <!-- Barra de navegación -->
+    <nav class="navbar navbar-expand-lg">
+        <a class="navbar-brand" href="#">Abarrotes Vicky</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('index') }}">Home <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('productos') }}">Productos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('categorias') }}">Categorías</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Ventas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('proveedores') }}">Proveedores</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('usuarios') }}">Usuarios</a>
+                </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            </form>
+        </div>
+    </nav>
+
     <div class="container">
         <h2>Registro de Usuario</h2>
         <form action="{{ url_for('usuarios_nuevo') }}" method="post" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="nombre">Nombre:</label>
-                <input type="text" id="name" placeholder="Ingresa el nombre" name="name" required>
+                <input type="text" id="nombre" placeholder="Ingresa el nombre" name="name" required>
             </div>
             <div class="form-group">
                 <label for="contraseña">Contraseña:</label>
-                <input type="password" id="password" placeholder="Ingresa la contraseña" name="password" required>
+                <input type="password" id="contraseña" placeholder="Ingresa la contraseña" name="password" required>
             </div>
             <div class="form-group">
                 <label for="rol">Rol:</label>
@@ -87,5 +151,14 @@
             </div>
         </form>
     </div>
+
+    <!-- Pie de página -->
+    <footer class="footer">
+        <p>&copy; 2024 Abarrotes Vicky. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
