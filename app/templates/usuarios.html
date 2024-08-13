@@ -66,9 +66,9 @@
                     <a class="nav-link" href="{{ url_for('usuarios') }}">Usuarios</a>
                 </li>
             </ul>
-            <form class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            <form class="form-inline my-2 my-lg-0" method="get" action="{{ url_for('usuarios') }}">
+                <input class="form-control mr-sm-2" type="search" name="search" value="{{ search_query }}" placeholder="Buscar por nombre" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Buscar</button>
             </form>
         </div>
     </nav>
@@ -106,18 +106,18 @@
                 <tr>
                     <td>
                         {% if usuario.imagen %}
-                            <img src="{{ url_for('static', filename='uploads/' + usuario.imagen) }}" alt="Imagen de {{ usuario.name }}" style="max-width: 100px; height: auto;">
+                            <img src="{{ url_for('static', filename='uploads/' + usuario.imagen) }}" alt="Imagen de {{ usuario.nombre }}" style="max-width: 100px; height: auto;">
                         {% else %}
                             ¡Este usuario no cuenta con una imagen!
                         {% endif %}
                     </td>
-                    <td>{{ usuario.name }}</td>
-                    <td>{{ usuario.rol}}</td>
+                    <td>{{ usuario.1 }}</td>
+                    <td>{{ usuario.3 }}</td>
                     <td>{{ 'Sí' if usuario.activo else 'No' }}</td>
                     
                     <td>
-                        <a href="{{ url_for('usuarios_detalles', id=usuario.id_usuario) }}" class="btn btn-info btn-sm">Detalles</a>
-                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" data-id="{{ usuario.id_usuario }}">Eliminar Usuario</button>
+                        <a href="{{ url_for('usuarios_detalles', id=usuario.0) }}" class="btn btn-info btn-sm">Detalles</a>
+                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" data-id="{{ usuario.0 }}">Eliminar Usuario</button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -128,6 +128,33 @@
                 {% endif %}
             </tbody>
         </table>
+        
+        <!-- Paginación -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('usuarios', search=search_query, page=page - 1) }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('usuarios', search=search_query, page=p) }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                
+                {% if page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('usuarios', search=search_query, page=page + 1) }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
     </div>
 
     <!-- Modal -->

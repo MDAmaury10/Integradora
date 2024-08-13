@@ -135,20 +135,39 @@ def index():
 @app.route('/productos')
 @login_required
 def productos():
+    search_query = request.args.get('query', '')  # Obtiene el término de búsqueda, si existe
+    page = int(request.args.get('page', 1))  # Obtiene el número de página, por defecto 1
+    per_page = 10  # Número de productos por página
+
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor()
-        sql_count='SELECT COUNT(*) FROM productos_sql'
-        sql_lim='SELECT * FROM productos_sql'
-        #cursor.execute(sql)
-        productos, page, per_page, total_items, total_pages = paginador(sql_count, sql_lim, in_page=1, per_pages=10)
-        #productos = cursor.fetchall()
+        
+        # Ajusta la consulta SQL según si hay o no término de búsqueda
+        if search_query:
+            sql_count = "SELECT COUNT(*) FROM productos_sql WHERE nombre ILIKE %s"
+            sql_lim = "SELECT * FROM productos_sql WHERE nombre ILIKE %s LIMIT %s OFFSET %s"
+            cursor.execute(sql_count, ('%' + search_query + '%',))
+            total_items = cursor.fetchone()[0]
+            cursor.execute(sql_lim, ('%' + search_query + '%', per_page, (page - 1) * per_page))
+        else:
+            sql_count = "SELECT COUNT(*) FROM productos_sql"
+            sql_lim = "SELECT * FROM productos_sql LIMIT %s OFFSET %s"
+            cursor.execute(sql_count)
+            total_items = cursor.fetchone()[0]
+            cursor.execute(sql_lim, (per_page, (page - 1) * per_page))
+        
+        productos = cursor.fetchall()
+        total_pages = (total_items + per_page - 1) // per_page  # Calcula el número total de páginas
+        
         cursor.close()
         conn.close()
-        return render_template('productos.html', productos=productos, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
+
+        return render_template('productos.html', productos=productos, search_query=search_query, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
     else:
         flash('Error al conectar a la base de datos.')
         return redirect(url_for('index'))
+
         
 
 @app.route('/productos/crear')
@@ -267,20 +286,36 @@ def productos_eliminar(id):
 @app.route('/proveedores')
 @login_required
 def proveedores():
+    search_query = request.args.get('search', '')
+    page = int(request.args.get('page', 1))
+    per_page = 10
+
     conn = get_db_connection()
     if conn:
         cur = conn.cursor()
-        sql_count='SELECT COUNT (*) FROM proveedores_sql'
-        sql_lim='SELECT * FROM proveedores_sql'
-        #cur.execute(sql)
-        proveedores, page, per_page, total_items, total_pages = paginador(sql_count, sql_lim, in_page=1, per_pages=10)
-        #proveedores = cur.fetchall()
+        if search_query:
+            sql_count = 'SELECT COUNT(*) FROM proveedores_sql WHERE contacto ILIKE %s'
+            sql_lim = 'SELECT * FROM proveedores_sql WHERE contacto ILIKE %s LIMIT %s OFFSET %s'
+            cur.execute(sql_count, ('%' + search_query + '%',))
+            total_items = cur.fetchone()[0]
+            cur.execute(sql_lim, ('%' + search_query + '%', per_page, (page - 1) * per_page))
+        else:
+            sql_count = "SELECT COUNT(*) FROM proveedores_sql"
+            sql_lim = "SELECT * FROM proveedores_sql LIMIT %s OFFSET %s"
+            cur.execute(sql_count)
+            total_items = cur.fetchone()[0]
+            cur.execute(sql_lim, (per_page, (page - 1) * per_page))
+
+        proveedores = cur.fetchall()
+        total_pages = (total_items + per_page - 1) // per_page
         cur.close()
         conn.close()
-        return render_template ('proveedores.html', proveedores=proveedores, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
+        return render_template('proveedores.html', proveedores=proveedores, search_query=search_query, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
     else:
         flash('Error al conectar a la base de datos.')
         return redirect(url_for('index'))
+
+
     
 @app.route('/proveedores/crear')
 @login_required
@@ -307,11 +342,12 @@ def proveedores_nuevo():
         diaEntrega=request.form['diaEntrega']
         totalPago=float(request.form['totalPago'])
         producto=int(request.form['producto'])
+        cantidad=(request.form['cantidadProducto'])
         
         conn=get_db_connection()
         cur=conn.cursor()
-        cur.execute ('INSERT INTO proveedores (contacto, dia_pedido, dia_entrega, total_pagado, id_producto) VALUES (%s, %s, %s, %s, %s)',
-                    (contacto, diaPedido, diaEntrega, totalPago, producto))
+        cur.execute ('INSERT INTO proveedores (contacto, dia_pedido, dia_entrega, total_pagado, id_producto, cantidad_entregada) VALUES (%s, %s, %s, %s, %s, %s)',
+                    (contacto, diaPedido, diaEntrega, totalPago, producto, cantidad))
         conn.commit()
         cur.close()
         conn.close() 
@@ -360,10 +396,11 @@ def proveedores_actualizar(id):
         diaEntrega=request.form['diaEntrega']
         totalPago=request.form['totalPago']
         producto=request.form['producto']
+        cantidad=request.form['cantidad']
         conn=get_db_connection()
         cur=conn.cursor()
-        sql='UPDATE proveedores SET contacto=%s, dia_pedido=%s, dia_entrega=%s, total_pagado=%s, id_producto=%s WHERE id_proveedor=%s'
-        values=(contacto, diaPedido, diaEntrega, totalPago, producto, id)
+        sql='UPDATE proveedores SET contacto=%s, dia_pedido=%s, dia_entrega=%s, total_pagado=%s, id_producto=%s, cantidad_entregada=%s WHERE id_proveedor=%s'
+        values=(contacto, diaPedido, diaEntrega, totalPago, producto, cantidad, id)
         cur.execute(sql, values)
         conn.commit()
         cur.close()
@@ -391,20 +428,39 @@ def proveedores_eliminar(id):
 @app.route('/categorias')
 @login_required
 def categorias():
+    search_query = request.args.get('search', '')  # Obtener el término de búsqueda de la solicitud
+    page = int(request.args.get('page', 1))  # Obtener el número de página, predeterminado a 1
+    per_page = 10
+    
     conn = get_db_connection()
     if conn:
-        cur= conn.cursor()
-        sql_count='SELECT COUNT (*) FROM categorias'
-        sql_lim='SELECT * FROM categorias'
-        #cur.execute(sql)
-        categorias, page, per_page, total_items, total_pages = paginador(sql_count, sql_lim, in_page=1, per_pages=10)
-        #categorias=cur.fetchall()
+        cur = conn.cursor()
+        
+        if search_query:
+            sql_count = "SELECT COUNT(*) FROM categorias WHERE nombre ILIKE %s"
+            sql_lim = "SELECT * FROM categorias WHERE nombre ILIKE %s LIMIT %s OFFSET %s"
+            cur.execute(sql_count, ('%' + search_query + '%',))
+            total_items = cur.fetchone()[0]
+            cur.execute(sql_lim, ('%' + search_query + '%', per_page, (page - 1) * per_page))
+        else:
+            sql_count = "SELECT COUNT(*) FROM categorias"
+            sql_lim = "SELECT * FROM categorias LIMIT %s OFFSET %s"
+            cur.execute(sql_count)
+            total_items = cur.fetchone()[0]
+            cur.execute(sql_lim, (per_page, (page - 1) * per_page))
+
+        categorias = cur.fetchall()
+        total_pages = (total_items + per_page - 1) // per_page  # Calcula el número total de páginas
+        
         cur.close()
         conn.close()
-        return render_template('categorias.html', categorias=categorias, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
+
+        return render_template('categorias.html', categorias=categorias, search_query=search_query, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
     else:
-        flash('Error al conectar a la base de datos')
+        flash('Error al conectar a la base de datos.')
         return redirect(url_for('index'))
+
+
     
 @app.route('/categorias/crear')
 @login_required
@@ -499,20 +555,38 @@ def categorias_eliminar(id):
 @app.route('/usuarios')
 @login_required
 def usuarios():
+    search_query = request.args.get('search', '')  # Obtener el término de búsqueda de la solicitud
+    page = int(request.args.get('page', 1))  # Obtener el número de página, predeterminado a 1
+    per_page = 10
+    
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor()
-        sql_count='SELECT COUNT (*) FROM usuarios'
-        sql_lim='SELECT * FROM usuarios'
-        #cursor.execute(sql)
-        usuarios, page, per_page, total_items, total_pages = paginador(sql_count, sql_lim, in_page=1, per_pages=10)
-        #usuarios = cursor.fetchall()
+        
+        if search_query:
+            sql_count = "SELECT COUNT(*) FROM usuarios WHERE name ILIKE %s"
+            sql_lim = "SELECT * FROM usuarios WHERE name ILIKE %s LIMIT %s OFFSET %s"
+            cursor.execute(sql_count, ('%' + search_query + '%',))
+            total_items = cursor.fetchone()[0]
+            cursor.execute(sql_lim, ('%' + search_query + '%', per_page, (page - 1) * per_page))
+        else:
+            sql_count = "SELECT COUNT(*) FROM usuarios"
+            sql_lim = "SELECT * FROM usuarios LIMIT %s OFFSET %s"
+            cursor.execute(sql_count)
+            total_items = cursor.fetchone()[0]
+            cursor.execute(sql_lim, (per_page, (page - 1) * per_page))
+
+        usuarios = cursor.fetchall()
+        total_pages = (total_items + per_page - 1) // per_page  # Calcula el número total de páginas
+        
         cursor.close()
         conn.close()
-        return render_template('usuarios.html', usuarios=usuarios, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages )
+
+        return render_template('usuarios.html', usuarios=usuarios, search_query=search_query, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
     else:
         flash('Error al conectar a la base de datos.')
         return redirect(url_for('index'))
+
             
 @app.route('/usuarios/crear')
 @login_required
@@ -581,38 +655,39 @@ def usuarios_detalles(id):
 @login_required
 def usuarios_editar(id):
     titulo = 'Detalles del usuario'
-    conn=get_db_connection()
-    cur=conn.cursor()
-    sql = 'SELECT * FROM USUARIOS WHERE id_usuario=%s'
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    sql = 'SELECT * FROM usuarios WHERE id_usuario=%s'
     cur.execute(sql, (id,))
-    usuarios=cur.fetchone()
-    conn.commit()
+    usuario = cur.fetchone()
     cur.close()
     conn.close()
-    return render_template ('usuarios_detalles.html', titulo=titulo, usuarios=usuarios)
+    return render_template('usuarios_detalles.html', titulo=titulo, usuario=usuario)
 
-@app.route('/usuarios/actualizar/<string:id>', methods=['GET', 'POST'])
+@app.route('/usuarios/actualizar/<string:id>', methods=['POST'])
 @login_required
 def usuarios_actualizar(id):
-    if request.method=='POST':
-        name=request.form['name']
-        password=request.form['password']
-        rol=request.form['rol']
-        active=request.form['active'] == 'on'
-        hashed_password = generate_password_hash(password)
-        conn=get_db_connection()
-        cur=conn.cursor()
-        sql = 'UPDATE usuarios SET name=%s, password=%s, rol=%s, activo=%s WHERE id_usuario=%s'
-        values = (name, hashed_password, rol, active, id)
+    if request.method == 'POST':
+        name = request.form['name']
+        rol = request.form['rol']
+        activo = request.form.get('active') == 'on'
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Actualiza solo los campos name, rol y activo
+        sql = 'UPDATE usuarios SET name=%s, rol=%s, activo=%s WHERE id_usuario=%s'
+        values = (name, rol, activo, id)
+
         cur.execute(sql, values)
         conn.commit()
         cur.close()
         conn.close()
-        flash('¡Usuario editadi de manera correcta!')
+        flash('¡Usuario editado de manera correcta!')
         return redirect(url_for('usuarios'))
     else:
-        flash('Error al hacer la edicion de usuario')
-        return redirect (url_for('usuarios'))
+        flash('Error al hacer la edición de usuario')
+        return redirect(url_for('usuarios'))
     
 @app.route('/usuarios/eliminar/<string:id>', methods=['POST'])
 @login_required

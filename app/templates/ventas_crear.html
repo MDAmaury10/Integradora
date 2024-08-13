@@ -26,7 +26,7 @@
             background: #fff;
             padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            flex: 1; /* Permite que el contenedor ocupe el espacio restante */
+            flex: 1;
         }
         h2 {
             text-align: center;
@@ -121,20 +121,35 @@
         <form id="venta-form" action="{{ url_for('ventas_nuevo') }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             
-            <div class="form-group">
+            <!-- Contenedor dinámico para los productos -->
+            <div id="productos-container">
+                <div class="form-group producto-item">
+                    <label for="producto">Producto:</label>
+                    <select class="producto" name="producto[]" required>
+                        <option value="" disabled selected>Selecciona un producto</option>
+                        {% for producto in productos %}
+                            <option value="{{ producto[0] }}" data-precio="{{ producto[2] }}">{{ producto[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group cantidad-item">
+                    <label for="cantidad">Cantidad:</label>
+                    <input type="number" class="cantidad" name="cantidad[]" min="1" required>
+                </div>
+            </div>
+
+            <!-- Botón para agregar más productos -->
+            <div class="form-group producto-item">
                 <label for="producto">Producto:</label>
-                <select id="producto" name="producto" required>
-                    <option value="" disabled select>Selecciona un producto</option>
-                    {% for producto in productos %}
-                        <option value="{{ producto[0] }}">{{ producto[1] }}</option>
+                <select id="producto-template" class="producto" name="producto[]" required>
+                    <option value="" disabled selected>Selecciona un producto</option>
+                    {% for id, producto in productos.items() %}
+                        <option value="{{ id }}" data-precio="{{ producto.precio }}">{{ producto.nombre }}</option>
                     {% endfor %}
                 </select>
             </div>
-
-            <div class="form-group">
-                <label for="cantidad">Cantidad:</label>
-                <input type="number" id="cantidad" name="cantidad" min="1" required>
-            </div>
+            
 
             <div class="form-group">
                 <label for="total">Total:</label>
