@@ -699,32 +699,32 @@ def usuarios_eliminar(id):
     flash('¡Usuario eliminado de manera correcta!')
     return redirect(url_for('usuarios'))    
 
-@app.route('/ventas')
+@app.route('/ventas', methods=['GET'])
 @login_required
 def ventas():
-    search_query = request.args.get('search', '')  # Obtener el término de búsqueda de la solicitud
-    page = int(request.args.get('page', 1))  # Obtener el número de página, predeterminado a 1
+    search_query = request.args.get('search', '')
+    page = int(request.args.get('page', 1))
     per_page = 10
-    
+
     conn = get_db_connection()
     if conn:
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
         
         if search_query:
-            sql_count = "SELECT COUNT(*) FROM ventas WHERE total ILIKE %s"
-            sql_lim = "SELECT * FROM ventas WHERE total ILIKE %s LIMIT %s OFFSET %s"
+            sql_count = "SELECT COUNT(*) FROM ventas WHERE total::text ILIKE %s"
+            sql_lim = "SELECT * FROM ventas WHERE total::text ILIKE %s LIMIT %s OFFSET %s"
             cur.execute(sql_count, ('%' + search_query + '%',))
-            total_items = cur.fetchone()[0]
+            total_items = cur.fetchone()['count']
             cur.execute(sql_lim, ('%' + search_query + '%', per_page, (page - 1) * per_page))
         else:
             sql_count = "SELECT COUNT(*) FROM ventas"
             sql_lim = "SELECT * FROM ventas LIMIT %s OFFSET %s"
             cur.execute(sql_count)
-            total_items = cur.fetchone()[0]
+            total_items = cur.fetchone()['count']
             cur.execute(sql_lim, (per_page, (page - 1) * per_page))
 
         ventas = cur.fetchall()
-        total_pages = (total_items + per_page - 1) // per_page  # Calcula el número total de páginas
+        total_pages = (total_items + per_page - 1) // per_page
         
         cur.close()
         conn.close()
@@ -734,60 +734,106 @@ def ventas():
         flash('Error al conectar a la base de datos.')
         return redirect(url_for('index'))
 
-''''
-
-@app.route('/registrar_venta', methods=['POST'])
-def registrar_venta():
-    conn=get_db_connection()
-    id_usuario = current_user[0]()  # Función que recupera el ID del usuario
-    cur = conn.cursor()
-    
-    cur.execute("INSERT INTO ventas (id_usuario) VALUES (%s) RETURNING id_venta", (id_usuario,))
-    id_venta = cur.fetchone()[0]
-    conn.commit()
-    
-    return redirect(url_for('detalles_venta', id_venta=id_venta))
-
-@app.route('/detalles_venta/<int:id_venta>', methods=['GET', 'POST'])
-def detalles_venta(id_venta):
-    conn=get_db_connection()
-    cur = conn.cursor()
-
+@app.route('/ventas_nuevo', methods=['GET', 'POST'])
+@login_required
+def ventas_nuevo():
     if request.method == 'POST':
-        # Procesar el formulario para agregar/modificar productos
-        producto_id = request.form.get('producto_id')
-        cantidad = request.form.get('cantidad')
-        
-        # Insertar o actualizar el detalle de la venta
-        cur.execute("""
-            INSERT INTO detalles_venta (fk_venta, fk_producto, cantidad)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (fk_venta, fk_producto) DO UPDATE
-            SET cantidad = %s
-        """, (id_venta, producto_id, cantidad, cantidad))
-        conn.commit()
+        try:
+            productos = request.form.getlist('producto[]')
+            precios = request.form.getlist('precio[]')
+            cantidades = request.form.getlist('cantidad[]')
 
-    # Búsqueda de productos
-    query = request.args.get('query', '')
-    cur.execute("SELECT id_producto, nombre FROM productos WHERE nombre ILIKE %s", (f'%{query}%',))
-    productos = cur.fetchall()
+            if len(productos) == 0:
+                flash('No se ha seleccionado ningún producto.')
+                return redirect(url_for('ventas_nuevo'))
 
-    # Recuperar productos seleccionados y calcular el total
+            conn = get_db_connection()
+            cur = conn.cursor()
+
+            # Insertar nueva venta
+            cur.execute("INSERT INTO ventas (id_usuario, fecha_hora, total, confirmado) VALUES (%s, NOW(), 0, FALSE) RETURNING id_venta",
+                        (current_user.id,))
+            id_venta = cur.fetchone()[0]
+
+            # Insertar detalles de la venta
+            for producto_id, precio, cantidad in zip(productos, precios, cantidades):
+                cur.execute("INSERT INTO detalles_venta (fk_venta, fk_producto, precio, cantidad) VALUES (%s, %s, %s, %s)",
+                            (id_venta, producto_id, precio, cantidad))
+
+            conn.commit()
+
+            # Calcular el total de la venta
+            total = calcular_total(conn, id_venta)
+
+            # Actualizar el total en la tabla de ventas
+            cur.execute("UPDATE ventas SET total = %s WHERE id_venta = %s", (total, id_venta))
+            conn.commit()
+
+            cur.close()
+            conn.close()
+
+            flash('Venta registrada exitosamente.')
+            return redirect(url_for('ventas_nuevo'))
+        except Exception as e:
+            print(e)
+            flash('Error al registrar la venta.')
+            return redirect(url_for('ventas_nuevo'))
+
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id_producto, nombre, precio FROM productos")
+        productos = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        print(productos)  # Agrega esta línea para verificar los datos
+
+        total = 0
+
+        return render_template('ventas_nuevo.html', productos=productos, total=total)
+
+
+def calcular_total(conn, id_venta):
+    """Calcula el total de una venta dada el id de la venta."""
+    cur = conn.cursor()
     cur.execute("""
-        SELECT p.nombre, d.cantidad, p.precio, d.cantidad * p.precio AS subtotal
+        SELECT SUM(d.precio * d.cantidad) AS total
         FROM detalles_venta d
-        JOIN productos p ON d.fk_producto = p.id_producto
         WHERE d.fk_venta = %s
+        GROUP BY d.fk_venta
     """, (id_venta,))
-    detalles = cur.fetchall()
+    resultado = cur.fetchone()
+    cur.close()
+    return resultado[0] if resultado[0] is not None else 0
 
-    cur.execute("SELECT SUM(d.cantidad * p.precio) FROM detalles_venta d JOIN productos p ON d.fk_producto = p.id_producto WHERE d.fk_venta = %s", (id_venta,))
-    total = cur.fetchone()[0] or 0
-    
-    return render_template('detalles_venta.html', productos=productos, detalles=detalles, total=total)
+@app.route('/ventas/<int:id_venta>/detalles', methods=['POST'])
+@login_required
+def agregar_detalles_venta(id_venta):
+    productos = request.form.getlist('producto[]')
+    precios = request.form.getlist('precio[]')
+    cantidades = request.form.getlist('cantidad[]')
 
-'''''''''
+    conn = get_db_connection()
+    cur = conn.cursor()
 
+    for producto, precio, cantidad in zip(productos, precios, cantidades):
+        cur.execute(
+            'INSERT INTO detalles_venta (fk_venta, fk_producto, precio, cantidad) VALUES (%s, %s, %s, %s);',
+            (id_venta, producto, precio, cantidad)
+        )
+
+    # Calcular el total y actualizar la venta
+    cur.execute(
+        'UPDATE ventas SET total = (SELECT SUM(precio * cantidad) FROM detalles_venta WHERE fk_venta = %s) WHERE id_venta = %s;',
+        (id_venta, id_venta)
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return redirect(url_for('ventas'))
 
 
 

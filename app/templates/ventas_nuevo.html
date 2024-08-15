@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -168,48 +167,6 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            // Función para agregar nuevos campos de producto
-            $('#agregar-producto').click(function() {
-                var newProductField = `
-                    <div class="form-group">
-                        <label for="producto">Producto:</label>
-                        <select class="form-control producto" name="producto[]" required>
-                            <option value="" disabled selected>Selecciona un producto</option>
-                            {% for producto in productos %}
-                                <option value="{{ producto[0] }}" data-precio="{{ producto[2] }}">{{ producto[1] }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="cantidad">Cantidad:</label>
-                        <input type="number" class="form-control cantidad" name="cantidad[]" min="1" required>
-                    </div>
-                `;
-                $('#productos-container').append(newProductField);
-            });
-
-            // Función para calcular el total y cambio
-            function calcularTotales() {
-                var total = 0;
-                $('.producto').each(function(index) {
-                    var precio = $(this).find('option:selected').data('precio');
-                    var cantidad = $('.cantidad').eq(index).val();
-                    if (precio && cantidad) {
-                        total += precio * cantidad;
-                    }
-                });
-                $('#total').val(total.toFixed(2));
-
-                var efectivo = parseFloat($('#efectivo').val()) || 0;
-                var cambio = efectivo - total;
-                $('#cambio').val(cambio.toFixed(2));
-            }
-
-            $('#efectivo').on('input', calcularTotales);
-            $('#productos-container').on('input', '.cantidad', calcularTotales);
-        });
-    </script>
+    <script src="{{ url_for('static', filename='js/venta.js') }}"></script>
 </body>
 </html>
