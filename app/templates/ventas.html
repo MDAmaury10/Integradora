@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista de Categorías</title>
+    <title>Vista de Ventas</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         html, body {
@@ -18,19 +18,19 @@
             flex: 1;
         }
         .navbar-brand {
-            font-size: 2rem; /* Tamaño de letra más grande */
-            font-family: 'Comic Sans MS', cursive, sans-serif; /* Fuente llamativa */
+            font-size: 2rem;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
             font-weight: bold;
-            color: #28a745 !important; /* Cambia a un color verde atractivo */
+            color: #28a745 !important;
         }
         .navbar {
-            background-color: #343a40; /* Fondo oscuro para la barra de navegación */
+            background-color: #343a40;
         }
         .navbar-nav .nav-link {
             color: #fff !important;
         }
         .navbar-nav .nav-link:hover {
-            color: #28a745 !important; /* Cambia a verde al pasar el mouse */
+            color: #28a745 !important;
         }
         .footer {
             background-color: #343a40;
@@ -60,17 +60,17 @@
                     <a class="nav-link" href="{{ url_for('categorias') }}">Categorías</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Ventas</a>
+                    <a class="nav-link" href="{{ url_for('ventas') }}">Ventas</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('proveedores') }}">Proveedores</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('usuarios')}}">Usuarios</a>
+                    <a class="nav-link" href="{{ url_for('usuarios') }}">Usuarios</a>
                 </li>
             </ul>
-            <form class="form-inline my-2 my-lg-0" method="get" action="{{ url_for('categorias') }}">
-                <input class="form-control mr-sm-2" type="search" name="search" value="{{ search_query }}" placeholder="Buscar categorías" aria-label="Search">
+            <form class="form-inline my-2 my-lg-0" method="get" action="">
+                <input class="form-control mr-sm-2" type="search" name="search" value="{{ search_query }}" placeholder="Buscar ventas" aria-label="Search">
                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Buscar</button>
             </form>
         </div>
@@ -89,30 +89,41 @@
         {% endwith %}
         
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">Categorías</h2>
-            <a href="{{ url_for('categorias_crear') }}" class="btn btn-success">Agregar Categoría</a>
+            <h2 class="mb-0">Ventas</h2>
+            <a href="{{ url_for('ventas_crear')}}" class="btn btn-success">Registrar Venta</a>
         </div>
         <table class="table table-bordered">
             <thead class="thead-light">
                 <tr>
-                    <th>Nombre de la Categoría</th>
+                    <th>Usuario</th>
+                    <th>Fecha y Hora</th>
+                    <th>Total</th>
+                    <th>Confirmada</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
-                {% if categorias %}
-                {% for categoria in categorias %}
+                {% if ventas %}
+                {% for venta in ventas %}
                 <tr>
-                    <td>{{ categoria.1 }}</td>
+                    <td>{{ venta.usuario.nombre }}</td>
+                    <td>{{ venta.fecha_hora }}</td>
+                    <td>{{ venta.total | round(2) }}</td>
                     <td>
-                        <a href="{{ url_for('categorias_detalles', id=categoria.0) }}" class="btn btn-info btn-sm">Detalles</a>
-                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" data-id="{{ categoria.0 }}">Eliminar Categoría</button>
+                        {% if venta.confirmada %}
+                        <span class="badge badge-success">Sí</span>
+                        {% else %}
+                        <span class="badge badge-warning">No</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="" class="btn btn-info btn-sm">Detalles</a>
                     </td>
                 </tr>
                 {% endfor %}
                 {% else %}
                 <tr>
-                    <td colspan="2" class="text-center">No hay categorías disponibles</td>
+                    <td colspan="6" class="text-center">No hay ventas registradas</td>
                 </tr>
                 {% endif %}
             </tbody>
@@ -122,46 +133,22 @@
         <nav aria-label="Page navigation">
             <ul class="pagination justify-content-center">
                 <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('categorias', page=page-1, search=search_query) }}" aria-label="Previous">
+                    <a class="page-link" href="{{ url_for('ventas', page=page-1, search=search_query) }}" aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
                 </li>
                 {% for p in range(1, total_pages + 1) %}
                 <li class="page-item {% if page == p %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('categorias', page=p, search=search_query) }}">{{ p }}</a>
+                    <a class="page-link" href="{{ url_for('ventas', page=p, search=search_query) }}">{{ p }}</a>
                 </li>
                 {% endfor %}
                 <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('categorias', page=page+1, search=search_query) }}" aria-label="Next">
+                    <a class="page-link" href="{{ url_for('ventas', page=page+1, search=search_query) }}" aria-label="Next">
                         <span aria-hidden="true">&raquo;</span>
                     </a>
                 </li>
             </ul>
         </nav>
-    </div>
-
-    <!-- Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    ¿Estás seguro de que deseas eliminar esta categoría?
-                </div>
-                <div class="modal-footer">
-                    <form id="deleteForm" action="" method="post">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger">Eliminar</button>
-                    </form>
-                </div>
-            </div>
-        </div>
     </div>
 
     <footer class="footer">
@@ -171,14 +158,5 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-        $('#deleteModal').on('show.bs.modal', function (event) {
-            var button = $(event.relatedTarget);
-            var id = button.data('id');
-            var modal = $(this);
-            var form = modal.find('#deleteForm');
-            form.attr('action', '/categorias/eliminar/' + id);
-        });
-    </script>
 </body>
 </html>

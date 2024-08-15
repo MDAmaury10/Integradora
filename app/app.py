@@ -4,6 +4,7 @@ from psycopg2.extras import RealDictCursor
 import os
 import psycopg2
 import uuid
+from datetime import datetime
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, url_for, redirect, request, flash
 from werkzeug.security import generate_password_hash
@@ -575,14 +576,11 @@ def usuarios():
             cursor.execute(sql_count)
             total_items = cursor.fetchone()[0]
             cursor.execute(sql_lim, (per_page, (page - 1) * per_page))
-
-        usuarios = cursor.fetchall()
-        total_pages = (total_items + per_page - 1) // per_page  # Calcula el número total de páginas
-        
-        cursor.close()
-        conn.close()
-
-        return render_template('usuarios.html', usuarios=usuarios, search_query=search_query, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
+            usuarios = cursor.fetchall()
+            total_pages = (total_items + per_page - 1) // per_page  # Calcula el número total de páginas
+            cursor.close()
+            conn.close()
+            return render_template('usuarios.html', usuarios=usuarios, search_query=search_query, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
     else:
         flash('Error al conectar a la base de datos.')
         return redirect(url_for('index'))
@@ -601,7 +599,6 @@ def usuarios_nuevo():
         password = request.form.get('password')
         rol = request.form.get('rol')
         active = request.form.get('active') == 'on'
-        
         imagen = request.files.get('imagen')
         imagen_filename = None
 
@@ -671,7 +668,6 @@ def usuarios_actualizar(id):
         name = request.form['name']
         rol = request.form['rol']
         activo = request.form.get('active') == 'on'
-
         conn = get_db_connection()
         cur = conn.cursor()
 
@@ -703,79 +699,94 @@ def usuarios_eliminar(id):
     flash('¡Usuario eliminado de manera correcta!')
     return redirect(url_for('usuarios'))    
 
-
-@app.route ('/ventas')
+@app.route('/ventas')
 @login_required
 def ventas():
-    conn=get_db_connection()
+    search_query = request.args.get('search', '')  # Obtener el término de búsqueda de la solicitud
+    page = int(request.args.get('page', 1))  # Obtener el número de página, predeterminado a 1
+    per_page = 10
+    
+    conn = get_db_connection()
     if conn:
         cur = conn.cursor()
-        sql_count='SELECT COUNT (*) FROM ventas'
-        sql_lim='SELECT * FROM ventas'
-        ventas, page, per_page, total_items, total_pages = paginador(sql_count, sql_lim, in_page=1, per_pages=10)
+        
+        if search_query:
+            sql_count = "SELECT COUNT(*) FROM ventas WHERE total ILIKE %s"
+            sql_lim = "SELECT * FROM ventas WHERE total ILIKE %s LIMIT %s OFFSET %s"
+            cur.execute(sql_count, ('%' + search_query + '%',))
+            total_items = cur.fetchone()[0]
+            cur.execute(sql_lim, ('%' + search_query + '%', per_page, (page - 1) * per_page))
+        else:
+            sql_count = "SELECT COUNT(*) FROM ventas"
+            sql_lim = "SELECT * FROM ventas LIMIT %s OFFSET %s"
+            cur.execute(sql_count)
+            total_items = cur.fetchone()[0]
+            cur.execute(sql_lim, (per_page, (page - 1) * per_page))
+
+        ventas = cur.fetchall()
+        total_pages = (total_items + per_page - 1) // per_page  # Calcula el número total de páginas
+        
         cur.close()
         conn.close()
-        return render_template('ventas.html', ventas=ventas, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
-    else:
-        flash('Error al conectar a la base de datos')
-        return redirect(url_for('index'))
 
-
-@app.route('/ventas/crear')
-@login_required
-def ventas_crear():
-    conn=get_db_connection()
-    if conn:
-        cur=conn.cursor()
-        sql='SELECT id_producto, nombre from productos'
-        cur.execute(sql)
-        productos=cur.fetchall()
-        cur.close()
-        conn.close()
-        return render_template ('ventas_crear.html', productos=productos)
+        return render_template('ventas.html', ventas=ventas, search_query=search_query, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
     else:
         flash('Error al conectar a la base de datos.')
         return redirect(url_for('index'))
 
-@app.route('/ventas/nuevo', methods= ['POST'])
-@login_required
-def ventas_nuevo():
-    productos
-    if request.method == 'POST':
-        #repetir las veces necesarias
-        x=request.form[x]
-        conn=get_db_connection()
-        cur=conn.cursor()
-        sql=''
-        values=()
-        cur.execute(sql, values)
-        conn.commit()
-        cur.close()
-        conn.close()
+''''
 
-        flash('Venta realizada de manera correcta')
-        return redirect(url_for('ventas_crear', productos=productos))
-    else:
-        flash('Error al conectar a la base de datos')
-        return redirect(url_for('ventas_crear'))
+@app.route('/registrar_venta', methods=['POST'])
+def registrar_venta():
+    conn=get_db_connection()
+    id_usuario = current_user[0]()  # Función que recupera el ID del usuario
+    cur = conn.cursor()
     
+    cur.execute("INSERT INTO ventas (id_usuario) VALUES (%s) RETURNING id_venta", (id_usuario,))
+    id_venta = cur.fetchone()[0]
+    conn.commit()
+    
+    return redirect(url_for('detalles_venta', id_venta=id_venta))
 
+@app.route('/detalles_venta/<int:id_venta>', methods=['GET', 'POST'])
+def detalles_venta(id_venta):
+    conn=get_db_connection()
+    cur = conn.cursor()
 
-##    if conn:
-  #      conn=get_db_connection()
-#        cur=conn.cursor()
-   #     sql_count='SELECT COUNT (*) FROM ventas'
-    #    sql_lim='SELECT * FROM ventas'
-     #   ventas, page, per_page, total_items, total_pages = paginador(sql_count, sql_lim, in_page=1, per_pages=10)
-      #  cur.close
-       # conn.close
-        #return render_template('ventas.html', ventas=ventas, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
-   # else:
-    #    flash('Error al conectar a la base de datos')
-     #   return redirect (url_for('index'))
+    if request.method == 'POST':
+        # Procesar el formulario para agregar/modificar productos
+        producto_id = request.form.get('producto_id')
+        cantidad = request.form.get('cantidad')
+        
+        # Insertar o actualizar el detalle de la venta
+        cur.execute("""
+            INSERT INTO detalles_venta (fk_venta, fk_producto, cantidad)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (fk_venta, fk_producto) DO UPDATE
+            SET cantidad = %s
+        """, (id_venta, producto_id, cantidad, cantidad))
+        conn.commit()
 
+    # Búsqueda de productos
+    query = request.args.get('query', '')
+    cur.execute("SELECT id_producto, nombre FROM productos WHERE nombre ILIKE %s", (f'%{query}%',))
+    productos = cur.fetchall()
 
+    # Recuperar productos seleccionados y calcular el total
+    cur.execute("""
+        SELECT p.nombre, d.cantidad, p.precio, d.cantidad * p.precio AS subtotal
+        FROM detalles_venta d
+        JOIN productos p ON d.fk_producto = p.id_producto
+        WHERE d.fk_venta = %s
+    """, (id_venta,))
+    detalles = cur.fetchall()
 
+    cur.execute("SELECT SUM(d.cantidad * p.precio) FROM detalles_venta d JOIN productos p ON d.fk_producto = p.id_producto WHERE d.fk_venta = %s", (id_venta,))
+    total = cur.fetchone()[0] or 0
+    
+    return render_template('detalles_venta.html', productos=productos, detalles=detalles, total=total)
+
+'''''''''
 
 
 
