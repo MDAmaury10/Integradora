@@ -86,27 +86,24 @@
 
         <h2 class="mb-4">Nueva Venta</h2>
         <form action="{{ url_for('ventas_crear') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Marca</th>
-                        <th>Color</th>
-                        <th>Talla</th>
+                        <th>Producto</th>
                         <th>Precio</th>
-                        <th>Cantidad</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for prenda in carrito %}
+                    {% for producto in carrito %}
                     <tr>
-                        <td>{{ prenda.nombre_marca }}</td>
-                        <td>{{ prenda.color }}</td>
-                        <td>{{ prenda.talla }}</td>
-                        <td>{{ prenda.precio_prenda }}</td>
+                        <td>{{ producto.nombre }}</td>
+                        <td>{{ producto.precio_producto }}</td>
                         <td>
-                            <form action="{{ url_for('quitar_prenda') }}" method="post" style="display:inline;">
-                                <input type="hidden" name="id_prenda" value="{{ prenda.id_prenda }}">
+                            <form action="{{ url_for('quitar_producto') }}" method="post" style="display:inline;">
+                                <input type="hidden" name="id_producto" value="{{ producto.id_producto }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-danger btn-sm">Quitar</button>
                             </form>
                         </td>
@@ -118,39 +115,35 @@
             <button type="submit" class="btn btn-success">Registrar Venta</button>
         </form>
 
-        <h3 class="mt-4">Agregar Prenda al Carrito</h3>
-        <form action="{{ url_for('agregar_prenda') }}" method="post">
+        <h3 class="mt-4">Agregar Producto al Carrito</h3>
+        <form action="{{ url_for('agregar_producto') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
-                <label for="id_prenda">ID de Prenda:</label>
-                <input type="text" id="id_prenda" name="id_prenda" class="form-control">
+                <label for="id_producto">ID de Producto:</label>
+                <input type="text" id="id_producto" name="id_producto" class="form-control">
             </div>
             <button type="submit" class="btn btn-primary">Agregar al Carrito</button>
         </form>
 
-        <!-- Mostrar lista de prendas -->
+        <!-- Mostrar lista de productos -->
         <h3 class="mt-4">Lista de Productos Disponibles</h3>
         <table class="table table-bordered">
             <thead>
                 <tr>
                     <th>Nombre</th>
-                    <th>Marca</th>
-                    <th>Stock</th>
                     <th>Precio</th>
-                    <th>Categoria</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for producto in productos %}
                 <tr>
-                    <td>{{ producto.1 }}</td>
-                    <td>{{ producto.2 }}</td>
-                    <td>{{ producto.3 }}</td>
-                    <td>{{ producto.4 }}</td>
-                    <td>{{ producto.5 }}</td>
-
+                    <td>{{ producto.nombre }}</td>
+                    <td>{{ producto.precio_producto }}</td>
                     <td>
-                        <form action="{{ url_for('agregar_prenda') }}" method="post" style="display:inline;">
-                            <input type="hidden" name="id_prenda" value="{{ prenda.id_prenda }}">
+                        <form action="{{ url_for('agregar_producto') }}" method="post" style="display:inline;">
+                            <input type="hidden" name="id_producto" value="{{ producto.id_producto }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-success btn-sm">Agregar</button>
                         </form>
                     </td>

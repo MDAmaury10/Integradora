@@ -284,9 +284,27 @@ def productos_eliminar(id):
     flash('¡Producto eliminado de manera correcta!')
     return redirect(url_for('productos'))
 
+def actualizar_estado_pedidos():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    hoy = datetime.now().date()
+    update_query = """
+    UPDATE proveedores
+    SET estado_pedido = TRUE
+    WHERE dia_entrega <= %s AND estado_pedido = FALSE;
+    """
+    cur.execute(update_query, (hoy,))
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
 @app.route('/proveedores')
 @login_required
 def proveedores():
+    actualizar_estado_pedidos()  # Actualiza el estado de los pedidos antes de listar
+    
     search_query = request.args.get('search', '')
     page = int(request.args.get('page', 1))
     per_page = 10
@@ -702,15 +720,12 @@ def usuarios_eliminar(id):
 @app.route("/ventas")
 @login_required
 def ventas():
-    # Obtenemos la página actual y el número de resultados por página desde los parámetros de la solicitud
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 5, type=int)
 
-    # Consultas SQL para contar el total de ventas y para obtener las ventas limitadas
-    sql_count = 'SELECT COUNT(*) FROM ventas;'
-    sql_lim = 'SELECT * FROM ventas ORDER BY fecha_hora DESC LIMIT %s OFFSET %s;'  # Añadir LIMIT y OFFSET a la consulta
+    sql_count = 'SELECT COUNT(*) FROM ventas_sql;'
+    sql_lim = 'SELECT * FROM ventas_sql ORDER BY fecha_hora DESC LIMIT %s OFFSET %s;'
 
-    # Pasamos los argumentos correctos a la función paginador
     paginado = paginador(sql_count, sql_lim, page, per_page)
     
     return render_template('ventas.html', 
@@ -720,17 +735,21 @@ def ventas():
                             total_items=paginado[3],
                             total_pages=paginado[4])
 
-
-
 @app.route('/venta_nuevo')
 @login_required
-def venta_nuevo():
-    carrito = session.get('carrito', [])  # Cargar carrito desde la sesión
-    total_precio = sum(item['precio_producto'] * item.get('cantidad', 1) for item in carrito)
+def ventas_nuevo():
+    carrito = session.get('carrito', [])
+    print(carrito)  # Añade esta línea para depuración
+
+    total_precio = sum(
+        float(item['precio_producto']) * int(item.get('cantidad', 1))
+        for item in carrito
+    )
+
     return render_template('ventas_nuevo.html', 
                            carrito=carrito, 
                            total_precio=total_precio,
-                           productos=lista_productos(),  # Cambia `prendas` por `productos` si es necesario
+                           productos=lista_productos(),  
                            titulo="Nueva Venta")
 
 
@@ -739,38 +758,39 @@ def venta_nuevo():
 def ventas_crear():
     usuario = getattr(current_user, 'id_usuario', None)
     fecha_creacion = datetime.now()
-    carrito = session.get('carrito', [])  # Cargar carrito desde la sesión
 
+    carrito = session.get('carrito', [])
     conn = get_db_connection()
     cur = conn.cursor()
 
     try:
         total_precio = 0
-        prendas_detalle = []
+        productos_detalle = []
 
         for item in carrito:
-            cantidad = item.get('cantidad', 1)
-            total_precio += item['precio_producto'] * cantidad
-            prendas_detalle.append(f"{item['categoria']}, {item['nombre_marca']}, {item['color']}, {item['talla']}, {item['precio_producto']}")
+            cantidad = int(item.get('cantidad', 1))
+            precio_producto = float(item.get('precio_producto', 0))
+            total_precio += precio_producto * cantidad
+            productos_detalle.append(f"{item.get('nombre_producto', 'Desconocido')}, {item.get('marca', 'Desconocido')}, {item.get('categoria', 'Desconocido')}, {precio_producto}")
 
-        prendas_string = ', '.join(prendas_detalle)
+        productos_string = ', '.join(productos_detalle)
 
         cur.execute("""
-            INSERT INTO public.ventas (usuario, fecha_creacion, prenda_mostrar, total_venta) 
+            INSERT INTO ventas (id_usuario, fecha_hora, producto_mostrar, total_venta) 
             VALUES (%s, %s, %s, %s) RETURNING id_venta
-        """, (usuario, fecha_creacion, prendas_string, total_precio))
+        """, (usuario, fecha_creacion, productos_string, total_precio))
         id_venta = cur.fetchone()[0]
         conn.commit()
 
         for item in carrito:
-            cantidad = item.get('cantidad', 1)
+            cantidad = int(item.get('cantidad', 1))
             cur.execute("""
-                INSERT INTO public.detalles_ventas (id_venta, id_producto, cantidad, precio) 
+                INSERT INTO detalles_venta (fk_venta, fk_producto, precio, cantidad)
                 VALUES (%s, %s, %s, %s)
-            """, (id_venta, item['id_producto'], cantidad, item['precio_producto']))
+            """, (id_venta, item.get('id_producto', 0), item.get('precio_producto', 0), cantidad))
 
         conn.commit()
-        session.pop('carrito', None)  # Limpiar el carrito de la sesión
+        session['carrito'] = []
         flash(f"Venta creada con éxito. Total: {total_precio:.2f} MX", "success")
 
     except Exception as e:
@@ -783,12 +803,11 @@ def ventas_crear():
 
     return redirect(url_for('ventas'))
 
-
 @app.route('/ventas/agregar_producto', methods=['POST'])
 @login_required
 def agregar_producto():
     id_producto = request.form.get('id_producto')
-    productos = lista_productos()
+    productos = lista_productos()   
 
     if id_producto:
         try:
@@ -796,14 +815,8 @@ def agregar_producto():
             producto = next((p for p in productos if p['id_producto'] == id_producto), None)
             if producto:
                 carrito = session.get('carrito', [])
-                existing_product = next((p for p in carrito if p['id_producto'] == id_producto), None)
-                if existing_product:
-                    existing_product['cantidad'] += 1
-                else:
-                    producto['cantidad'] = 1
-                    carrito.append(producto)
+                carrito.append(producto)
                 session['carrito'] = carrito
-
                 conn = get_db_connection()
                 cur = conn.cursor()
                 cur.execute("UPDATE productos SET stock = stock - 1 WHERE id_producto = %s AND stock > 0", (id_producto,))
@@ -817,8 +830,7 @@ def agregar_producto():
         except ValueError:
             flash("ID de producto inválido", "error")
 
-    return redirect(url_for('venta_nuevo'))
-
+    return redirect(url_for('ventas_nuevo'))
 
 @app.route('/ventas/quitar_producto', methods=['POST'])
 @login_required
@@ -835,19 +847,19 @@ def quitar_producto():
         except ValueError:
             flash("ID de producto inválido", "error")
 
-    return redirect(url_for('venta_nuevo'))
-
+    return redirect(url_for('ventas_nuevo'))
 
 def lista_productos():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id_producto, nombre, marca, stock, precio, categoria FROM productos ORDER BY id_producto")
+    cur.execute("SELECT id_producto, nombre, marca, stock, precio, categoria FROM productos_sql ORDER BY id_producto")
     rows = cur.fetchall()
     cur.close()
     conn.close()
 
     productos = [{'id_producto': row[0], 'nombre': row[1], 'marca': row[2], 'stock': row[3], 'precio_producto': row[4], 'categoria': row[5]} for row in rows]
     return productos
+
 
 
 
