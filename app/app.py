@@ -795,52 +795,58 @@ def agregar_producto():
             id_producto = int(id_producto)
             producto = next((p for p in productos if p['id_producto'] == id_producto), None)
             if producto:
-                carrito.append(producto)
+                carrito = session.get('carrito', [])
+                existing_product = next((p for p in carrito if p['id_producto'] == id_producto), None)
+                if existing_product:
+                    existing_product['cantidad'] += 1
+                else:
+                    producto['cantidad'] = 1
+                    carrito.append(producto)
+                session['carrito'] = carrito
+
                 conn = get_db_connection()
                 cur = conn.cursor()
-                cur.execute("UPDATE productos SET cantidad = cantidad - 1 WHERE id_producto = %s AND cantidad > 0", (id_producto,))
-                cur.execute("""
-                INSERT INTO temp_carrito (nombre_marca, color, talla, precio_prenda, cantidad, categoria)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                """, (prenda['nombre_marca'], prenda['color'], prenda['talla'], prenda['precio_prenda'], 1, prenda['categoria']))
+                cur.execute("UPDATE productos SET stock = stock - 1 WHERE id_producto = %s AND stock > 0", (id_producto,))
                 conn.commit()
                 cur.close()
                 conn.close()
 
-                flash("Prenda agregada al carrito", "success")
+                flash("Producto agregado al carrito", "success")
             else:
-                flash("Prenda no encontrada", "error")
+                flash("Producto no encontrado", "error")
         except ValueError:
-            flash("ID de prenda inválido", "error")
+            flash("ID de producto inválido", "error")
 
     return redirect(url_for('venta_nuevo'))
 
-@app.route('/ventas/quitar_prenda', methods=['POST'])
+
+@app.route('/ventas/quitar_producto', methods=['POST'])
 @login_required
-def quitar_prenda():
-    id_prenda = request.form.get('id_prenda')
-    global carrito
+def quitar_producto():
+    id_producto = request.form.get('id_producto')
+    carrito = session.get('carrito', [])
 
-    if id_prenda:
+    if id_producto:
         try:
-            id_prenda = int(id_prenda)
-            carrito = [p for p in carrito if p['id_prenda'] != id_prenda]
-            flash("Prenda quitada del carrito", "success")
+            id_producto = int(id_producto)
+            carrito = [p for p in carrito if p['id_producto'] != id_producto]
+            session['carrito'] = carrito
+            flash("Producto quitado del carrito", "success")
         except ValueError:
-            flash("ID de prenda inválido", "error")
+            flash("ID de producto inválido", "error")
 
     return redirect(url_for('venta_nuevo'))
+
 
 def lista_productos():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id_producto, nombre, marca, stock, precio, categoria FROM productos_sql ORDER BY id_producto")
+    cur.execute("SELECT id_producto, nombre, marca, stock, precio, categoria FROM productos ORDER BY id_producto")
     rows = cur.fetchall()
     cur.close()
     conn.close()
 
-    # Convertir los resultados en una lista de diccionarios
-    productos = [{'id_producto': row[0], 'nombre': row[1], 'marca': row[2], 'stock': row[3], 'precio': row[4], 'categoria': row[5]} for row in rows]
+    productos = [{'id_producto': row[0], 'nombre': row[1], 'marca': row[2], 'stock': row[3], 'precio_producto': row[4], 'categoria': row[5]} for row in rows]
     return productos
 
 
