@@ -61,3 +61,19 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('efectivo').addEventListener('input', calcularCambio);
     agregarProductoBtn.addEventListener('click', agregarProducto);
 });
+
+function actualizarCamposCalculados() {
+    // Supón que tienes funciones para calcular el total, efectivo y cambio
+    var total = calcularTotal();
+    var efectivo = calcularEfectivo();
+    var cambio = calcularCambio();
+
+    // Actualiza los campos ocultos
+    document.getElementById('total').value = total;
+    document.getElementById('efectivo').value = efectivo;
+    document.getElementById('cambio').value = cambio;
+}
+
+// Llama a esta función cuando se actualice el total, efectivo o cambio
+actualizarCamposCalculados();
+

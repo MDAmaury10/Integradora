@@ -3,80 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Venta - Sistema de Punto de Venta</title>
+    <title>Registrar Nueva Venta</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         html, body {
             height: 100%;
             margin: 0;
-            display: flex;
-            flex-direction: column;
         }
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
             display: flex;
             flex-direction: column;
         }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: #fff;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        .content {
             flex: 1;
         }
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-        }
-        .form-group input, .form-group select {
-            width: calc(100% - 20px);
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .form-group input[type="submit"] {
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-        }
-        .form-group input[type="submit"]:hover {
-            background-color: #0056b3;
-        }
         .navbar-brand {
-            font-size: 2rem;
-            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-size: 2rem; /* Tamaño de letra más grande */
+            font-family: 'Comic Sans MS', cursive, sans-serif; /* Fuente llamativa */
             font-weight: bold;
-            color: #28a745 !important;
+            color: #28a745 !important; /* Cambia a un color verde atractivo */
         }
         .navbar {
-            background-color: #343a40;
+            background-color: #343a40; /* Fondo oscuro para la barra de navegación */
         }
         .navbar-nav .nav-link {
             color: #fff !important;
         }
         .navbar-nav .nav-link:hover {
-            color: #28a745 !important;
+            color: #28a745 !important; /* Cambia a verde al pasar el mouse */
         }
         .footer {
             background-color: #343a40;
             color: white;
-            padding: 10px 0;
+            padding: 20px 0;
             text-align: center;
-            width: 100%;
         }
     </style>
 </head>
@@ -112,61 +72,100 @@
         </div>
     </nav>
 
-    <div class="container">
-        <h2>Registrar Venta</h2>
-        <form id="venta-form" action="{{ url_for('ventas_nuevo') }}" method="post">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="user_id" value="{{ current_user.id }}"> <!-- Campo oculto para el usuario actual -->
+    <div class="container mt-5 content">
+        <!-- Mostrar mensajes flash -->
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="alert alert-info">
+            {% for message in messages %}
+            <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
 
-            <div id="productos-container">
-                <div class="form-group">
-                    <label for="producto">Producto:</label>
-                    <select class="form-control producto" name="producto[]" required>
-                        <option value="" disabled selected>Selecciona un producto</option>
-                        {% for producto in productos %}
-                            <option value="{{ producto[0] }}" data-precio="{{ producto[2] }}">{{ producto[1] }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="cantidad">Cantidad:</label>
-                    <input type="number" class="form-control cantidad" name="cantidad[]" min="1" required>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <button type="button" id="agregar-producto" class="btn btn-secondary">Agregar otro producto</button>
-            </div>
-
-            <div class="form-group">
-                <label for="total">Total:</label>
-                <input type="text" id="total" name="total" class="form-control" readonly>
-            </div>
-
-            <div class="form-group">
-                <label for="efectivo">Efectivo:</label>
-                <input type="number" id="efectivo" name="efectivo" class="form-control" step="0.01" min="0" required>
-            </div>
-
-            <div class="form-group">
-                <label for="cambio">Cambio:</label>
-                <input type="text" id="cambio" name="cambio" class="form-control" readonly>
-            </div>
-
-            <div class="form-group">
-                <input type="submit" value="Registrar Venta" class="btn btn-primary">
-            </div>
+        <h2 class="mb-4">Nueva Venta</h2>
+        <form action="{{ url_for('ventas_crear') }}" method="post">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Marca</th>
+                        <th>Color</th>
+                        <th>Talla</th>
+                        <th>Precio</th>
+                        <th>Cantidad</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prenda in carrito %}
+                    <tr>
+                        <td>{{ prenda.nombre_marca }}</td>
+                        <td>{{ prenda.color }}</td>
+                        <td>{{ prenda.talla }}</td>
+                        <td>{{ prenda.precio_prenda }}</td>
+                        <td>
+                            <form action="{{ url_for('quitar_prenda') }}" method="post" style="display:inline;">
+                                <input type="hidden" name="id_prenda" value="{{ prenda.id_prenda }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Quitar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h4>Total: {{ total_precio }} MX</h4>
+            <button type="submit" class="btn btn-success">Registrar Venta</button>
         </form>
+
+        <h3 class="mt-4">Agregar Prenda al Carrito</h3>
+        <form action="{{ url_for('agregar_prenda') }}" method="post">
+            <div class="form-group">
+                <label for="id_prenda">ID de Prenda:</label>
+                <input type="text" id="id_prenda" name="id_prenda" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">Agregar al Carrito</button>
+        </form>
+
+        <!-- Mostrar lista de prendas -->
+        <h3 class="mt-4">Lista de Productos Disponibles</h3>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Marca</th>
+                    <th>Stock</th>
+                    <th>Precio</th>
+                    <th>Categoria</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                <tr>
+                    <td>{{ producto.1 }}</td>
+                    <td>{{ producto.2 }}</td>
+                    <td>{{ producto.3 }}</td>
+                    <td>{{ producto.4 }}</td>
+                    <td>{{ producto.5 }}</td>
+
+                    <td>
+                        <form action="{{ url_for('agregar_prenda') }}" method="post" style="display:inline;">
+                            <input type="hidden" name="id_prenda" value="{{ prenda.id_prenda }}">
+                            <button type="submit" class="btn btn-success btn-sm">Agregar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
-    <!-- Pie de página -->
     <footer class="footer">
         <p>&copy; 2024 Abarrotes Vicky. Todos los derechos reservados.</p>
     </footer>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="{{ url_for('static', filename='js/venta.js') }}"></script>
 </body>
 </html>

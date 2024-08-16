@@ -3,92 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ventas</title>
+    <title>Vista de Ventas</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
+        html, body {
+            height: 100%;
             margin: 0;
-            padding: 0;
         }
-        .container {
-            max-width: 1000px;
-            margin: auto;
-            background: #fff;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        body {
+            display: flex;
+            flex-direction: column;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .content {
+            flex: 1;
         }
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
+        .navbar-brand {
+            font-size: 2rem; /* Tamaño de letra más grande */
+            font-family: 'Comic Sans MS', cursive, sans-serif; /* Fuente llamativa */
+            font-weight: bold;
+            color: #28a745 !important; /* Cambia a un color verde atractivo */
         }
-        th {
+        .navbar {
+            background-color: #343a40; /* Fondo oscuro para la barra de navegación */
+        }
+        .navbar-nav .nav-link {
+            color: #fff !important;
+        }
+        .navbar-nav .nav-link:hover {
+            color: #28a745 !important; /* Cambia a verde al pasar el mouse */
+        }
+        .footer {
             background-color: #343a40;
             color: white;
-        }
-        .pagination {
-            margin-top: 20px;
+            padding: 20px 0;
             text-align: center;
-        }
-        .pagination a {
-            color: #007bff;
-            padding: 10px;
-            text-decoration: none;
-        }
-        .pagination a:hover {
-            text-decoration: underline;
-        }
-        .btn-custom {
-            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="mb-4">Ventas</h1>
-        <form action="{{ url_for('ventas') }}" method="get" class="mb-4">
-            <div class="form-group">
-                <input type="text" name="search" class="form-control" placeholder="Buscar por total" value="{{ search_query }}">
-            </div>
-            <button type="submit" class="btn btn-primary">Buscar</button>
-        </form>
-        <a href="{{ url_for('ventas_nuevo') }}" class="btn btn-success btn-custom">Agregar Nueva Venta</a>
-        <table class="table table-striped">
-            <thead>
+    <!-- Barra de navegación -->
+    <nav class="navbar navbar-expand-lg">
+        <a class="navbar-brand" href="#">Abarrotes Vicky</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('index') }}">Home <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('productos') }}">Productos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('categorias') }}">Categorías</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('ventas') }}">Ventas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('proveedores') }}">Proveedores</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('usuarios') }}">Usuarios</a>
+                </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0" method="get" action="{{ url_for('ventas') }}">
+                <input class="form-control mr-sm-2" type="search" name="buscar" value="{{ search_query }}" placeholder="Buscar ventas" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Buscar</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container mt-5 content">
+        <!-- Mostrar mensajes flash -->
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="alert alert-info">
+            {% for message in messages %}
+            <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Ventas</h2>
+            <a href="{{ url_for('venta_nuevo') }}" class="btn btn-success">Nueva Venta</a>
+        </div>
+        <table class="table table-bordered">
+            <thead class="thead-light">
                 <tr>
-                    <th>ID Venta</th>
-                    <th>ID Usuario</th>
-                    <th>Fecha y Hora</th>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
                     <th>Total</th>
-                    <th>Confirmada</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
+                {% if ventas %}
                 {% for venta in ventas %}
                 <tr>
-                    <td>{{ venta.id_venta }}</td>
-                    <td>{{ venta.id_usuario }}</td>
-                    <td>{{ venta.fecha_hora }}</td>
-                    <td>{{ venta.total }}</td>
-                    <td>{{ 'Sí' if venta.confirmada else 'No' }}</td>
+                    <td>{{ venta.fecha_hora.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ venta.nombre_usuario }}</td>
+                    <td>{{ venta.total_venta }}</td>
+                    <td>
+                        <a href="{{ url_for('venta_detalles', id=venta.id_venta) }}" class="btn btn-info btn-sm">Detalles</a>
+                    </td>
                 </tr>
                 {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center">No hay ventas disponibles</td>
+                </tr>
+                {% endif %}
             </tbody>
         </table>
-        <div class="pagination">
-            {% if page > 1 %}
-            <a href="{{ url_for('ventas', page=page-1, search=search_query) }}">Anterior</a>
-            {% endif %}
-            {% if page < total_pages %}
-            <a href="{{ url_for('ventas', page=page+1, search=search_query) }}">Siguiente</a>
-            {% endif %}
-        </div>
+
+        <!-- Controles de paginación -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('ventas', page=page-1, buscar=search_query) }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if page == p %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('ventas', page=p, buscar=search_query) }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('ventas', page=page+1, buscar=search_query) }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </div>
+
+    <footer class="footer">
+        <p>&copy; 2024 Abarrotes Vicky. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
