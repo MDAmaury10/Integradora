@@ -25,8 +25,8 @@ def get_db_connection():
     try:
         conn = psycopg2.connect(host='localhost', 
                                 dbname='integradora', 
-                                user="postgres", 
-                                password="postgre")
+                                user=os.environ["DB_USERNAME"], 
+                                password=os.environ["DB_PASSWORD"])
         return conn
     except psycopg2.Error as error:
         print(f"Error al conectar a la base de datos:{error}")
@@ -869,5 +869,5 @@ if __name__ == '__main__':
     csrf.init_app(app)
     app.register_error_handler(404, pagina_no_encontrada)
     app.register_error_handler(401, pagina_no_encontrada)
-    app.run(host='0.0.0.0', port=5000)
+    #app.run(host='0.0.0.0', port=5000)
     app.run(debug=True, port=5000)

@@ -141,7 +141,7 @@
                 <select id="producto" name="producto" required>
                     <option value="" disabled>Selecciona un producto</option>
                     {% for producto in productos %}
-                        <option value="{{ producto[0] }}" {% if producto[0] == proveedores.id_producto %}selected{% endif %}>
+                        <option value="{{ producto.id_producto }}" {% if producto[0] == proveedores.id_producto %}selected{% endif %}>
                             {{ producto[1] }}
                         </option>
                     {% endfor %}
