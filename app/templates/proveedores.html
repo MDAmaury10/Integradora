@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista de Proveedores</title>
+    <title>Vista de Pedidos</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         html, body {
@@ -51,7 +51,7 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index')}}">Home</a>
+                    <a class="nav-link" href="{{ url_for('index')}}">Inicio</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('productos') }}">Productos</a>
@@ -63,7 +63,7 @@
                     <a class="nav-link" href="{{ url_for('ventas') }}">Ventas</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('proveedores') }}">Proveedores</a>
+                    <a class="nav-link" href="{{ url_for('proveedores') }}">Pedidos</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('usuarios')}}">Usuarios</a>
@@ -89,8 +89,8 @@
         {% endwith %}
         
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">Proveedores</h2>
-            <a href="{{ url_for('proveedores_crear') }}" class="btn btn-success">Agregar Proveedor</a>
+            <h2 class="mb-0">Pedidos</h2>
+            <a href="{{ url_for('proveedores_crear') }}" class="btn btn-success">Agregar Pedido</a>
         </div>
         <table class="table table-bordered">
             <thead class="thead-light">
@@ -119,13 +119,13 @@
 
                     <td>
                         <a href="{{ url_for('proveedores_detalles', id=proveedor.0) }}" class="btn btn-info btn-sm">Detalles</a>
-                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" data-id="{{ proveedor.0 }}">Eliminar Proveedor</button>
+                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" data-id="{{ proveedor.0 }}">Eliminar Pedido</button>
                     </td>
                 </tr>
                 {% endfor %}     
                 {% else %}
                 <tr>
-                    <td colspan="7" class="text-center">No hay proveedores disponibles</td>
+                    <td colspan="7" class="text-center">No hay pedidos disponibles</td>
                 </tr>
                 {% endif %}
             </tbody>
@@ -164,7 +164,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    ¿Estás seguro de que deseas eliminar este proveedor?
+                    ¿Estás seguro de que deseas eliminar este pedido?
                 </div>
                 <div class="modal-footer">
                     <form id="deleteForm" action="" method="post">

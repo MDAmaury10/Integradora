@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Proveedor - Sistema de Punto de Venta</title>
+    <title>Editar Pedido - Sistema de Punto de Venta</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         html, body {
@@ -91,7 +91,7 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item active">
-                    <a class="nav-link" href="{{ url_for('index') }}">Home <span class="sr-only">(current)</span></a>
+                    <a class="nav-link" href="{{ url_for('index') }}">Inicio <span class="sr-only">(current)</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('productos') }}">Productos</a>
@@ -103,7 +103,7 @@
                     <a class="nav-link" href="{{ url_for('ventas') }}">Ventas</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('proveedores') }}">Proveedores</a>
+                    <a class="nav-link" href="{{ url_for('proveedores') }}">Pedidos</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('usuarios') }}">Usuarios</a>
@@ -117,7 +117,7 @@
     </nav>
 
     <div class="container">
-        <h2>Editar Proveedor</h2>
+        <h2>Editar Pedido</h2>
         <form action="{{ url_for('proveedores_actualizar', id=proveedores.0) }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
