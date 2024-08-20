@@ -860,6 +860,34 @@ def lista_productos():
     productos = [{'id_producto': row[0], 'nombre': row[1], 'marca': row[2], 'stock': row[3], 'precio_producto': row[4], 'categoria': row[5]} for row in rows]
     return productos
 
+@app.route('/venta/<int:id_venta>')
+def detalle_venta(id_venta):
+    conn = get_db_connection()  # Crea un cursor desde la conexión
+    cursor = conn.cursor()
+    # Ejecuta la consulta para obtener los detalles de la venta
+    cursor.execute("""
+        SELECT dv.fk_producto, dv.precio, dv.cantidad, p.nombre 
+        FROM detalles_venta dv
+        INNER JOIN productos p ON dv.fk_producto = p.id_producto
+        WHERE dv.fk_venta = %s
+    """, (id_venta,))
+    detalles_venta = cursor.fetchall()
+    
+    # Ejecuta la consulta para obtener la información general de la venta
+    cursor.execute("""
+        SELECT v.id_venta, v.fecha_hora, v.total_venta, u.name
+        FROM ventas v
+        INNER JOIN usuarios u ON v.id_usuario = u.id_usuario
+        WHERE v.id_venta = %s
+    """, (id_venta,))
+    venta = cursor.fetchone()
+    
+    cursor.close()  # Cierra el cursor después de su uso
+    
+    return render_template('ventas_detalles.html', venta=venta, detalles_venta=detalles_venta)
+
+
+
 
 
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista de Ventas</title>
+    <title>Detalle de la Venta</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         html, body {
@@ -38,6 +38,12 @@
             padding: 20px 0;
             text-align: center;
         }
+        table {
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -66,81 +72,38 @@
                     <a class="nav-link" href="{{ url_for('proveedores') }}">Pedidos</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('usuarios') }}">Usuarios</a>
+                    <a class="nav-link" href="{{ url_for('usuarios')}}">Usuarios</a>
                 </li>
             </ul>
-            <form class="form-inline my-2 my-lg-0" method="get" action="{{ url_for('ventas') }}">
-                <input class="form-control mr-sm-2" type="search" name="buscar" value="{{ search_query }}" placeholder="Buscar ventas" aria-label="Search">
-                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Buscar</button>
-            </form>
         </div>
     </nav>
 
     <div class="container mt-5 content">
-        <!-- Mostrar mensajes flash -->
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <div class="alert alert-info">
-            {% for message in messages %}
-            <p>{{ message }}</p>
-            {% endfor %}
-        </div>
-        {% endif %}
-        {% endwith %}
-        
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">Ventas</h2>
-            <a href="{{ url_for('ventas_nuevo') }}" class="btn btn-success">Nueva Venta</a>
-        </div>
+        <h1>Detalle de la Venta #{{ venta.0 }}</h1>
+        <p>Fecha y Hora: {{ venta.1 }}</p>
+        <p>Usuario: {{ venta.3 }}</p>
+        <h2>Productos Vendidos</h2>
         <table class="table table-bordered">
             <thead class="thead-light">
                 <tr>
-                    <th>Fecha</th>
-                    <th>Usuario</th>
-                    <th>Total</th>
-                    <th>Acciones</th>
+                    <th>Producto</th>
+                    <th>Precio Unitario</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
                 </tr>
             </thead>
             <tbody>
-                {% if ventas %}
-                {% for venta in ventas %}
+                {% for detalle in detalles_venta %}
                 <tr>
-                    <td>{{ venta.fecha_hora.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                    <td>{{ venta.name }}</td>
-                    <td>{{ venta.total_venta }}</td>
-                    <td>
-                        <a href="{{ url_for('detalle_venta', id_venta=venta.id_venta) }}" class="btn btn-info btn-sm">Detalles</a>
-                    </td>
+                    <td>{{ detalle[3] }}</td> <!-- Producto -->
+                    <td>{{ detalle[1] }}</td> <!-- Precio Unitario -->
+                    <td>{{ detalle[2] }}</td> <!-- Cantidad -->
+                    <td>{{ detalle[1] * detalle[2] }}</td> <!-- Subtotal -->
                 </tr>
                 {% endfor %}
-                {% else %}
-                <tr>
-                    <td colspan="4" class="text-center">No hay ventas disponibles</td>
-                </tr>
-                {% endif %}
             </tbody>
         </table>
-
-        <!-- Controles de paginación -->
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center">
-                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('ventas', page=page-1, buscar=search_query) }}" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-                {% for p in range(1, total_pages + 1) %}
-                <li class="page-item {% if page == p %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('ventas', page=p, buscar=search_query) }}">{{ p }}</a>
-                </li>
-                {% endfor %}
-                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('ventas', page=page+1, buscar=search_query) }}" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        <h3>Total de la Venta: {{ venta[2] }}</h3> <!-- Total de la Venta -->
     </div>
 
     <footer class="footer">
