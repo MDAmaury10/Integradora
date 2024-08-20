@@ -849,6 +849,7 @@ def quitar_producto():
 
     return redirect(url_for('ventas_nuevo'))
 
+
 def lista_productos():
     conn = get_db_connection()
     cur = conn.cursor()

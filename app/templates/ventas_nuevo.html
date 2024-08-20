@@ -101,7 +101,7 @@
                         <td>{{ producto.nombre }}</td>
                         <td>{{ producto.precio_producto }}</td>
                         <td>
-                            <form action="{{ url_for('quitar_producto') }}" method="post" style="display:inline;">
+                            <form action="{{ url_for('quitar_producto', id_producto=carrito.0) }}" method="post" style="display:inline;">
                                 <input type="hidden" name="id_producto" value="{{ producto.id_producto }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-danger btn-sm">Quitar</button>
