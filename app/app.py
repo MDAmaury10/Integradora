@@ -427,7 +427,7 @@ def proveedores_actualizar(id):
         flash ('¡Proveedor editado de manera correcta!')
         return redirect (url_for('proveedores'))
     else:
-        flash('Error al hacer la edición de proveedor')
+        flash('Error al hacer la edición de pedido')
         return redirect(url_for('proveedores'))
 
 @app.route('/proveedores/eliminar/<string:id>', methods=['POST'])
