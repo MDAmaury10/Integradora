@@ -1,4 +1,3 @@
-
 from flask_wtf.csrf import CSRFProtect
 from psycopg2.extras import RealDictCursor
 import os
@@ -10,14 +9,14 @@ from flask import Flask, render_template, url_for, redirect, request, flash, req
 from werkzeug.security import generate_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, logout_user
 from Models.ModelUser import ModelUser
-from Models.entitites.user import User
+from Models.entities.user import User
 
 
 
-app = Flask(__name__)
+app = Flask(_name_)
 csrf=CSRFProtect()
 
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(_file_), 'static', 'uploads')
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
 
 
@@ -311,138 +310,187 @@ def proveedores():
 
     conn = get_db_connection()
     if conn:
-        cur = conn.cursor()
-        if search_query:
-            sql_count = 'SELECT COUNT(*) FROM proveedores_sql WHERE contacto ILIKE %s'
-            sql_lim = 'SELECT * FROM proveedores_sql WHERE contacto ILIKE %s LIMIT %s OFFSET %s'
-            cur.execute(sql_count, ('%' + search_query + '%',))
-            total_items = cur.fetchone()[0]
-            cur.execute(sql_lim, ('%' + search_query + '%', per_page, (page - 1) * per_page))
-        else:
-            sql_count = "SELECT COUNT(*) FROM proveedores_sql"
-            sql_lim = "SELECT * FROM proveedores_sql LIMIT %s OFFSET %s"
-            cur.execute(sql_count)
-            total_items = cur.fetchone()[0]
-            cur.execute(sql_lim, (per_page, (page - 1) * per_page))
+        try:
+            cur = conn.cursor()
+            if search_query:
+                sql_count = 'SELECT COUNT(*) FROM proveedores_sql WHERE contacto ILIKE %s'
+                sql_lim = 'SELECT * FROM proveedores_sql WHERE contacto ILIKE %s LIMIT %s OFFSET %s'
+                cur.execute(sql_count, ('%' + search_query + '%',))
+                total_items = cur.fetchone()[0]
+                cur.execute(sql_lim, ('%' + search_query + '%', per_page, (page - 1) * per_page))
+            else:
+                sql_count = "SELECT COUNT(*) FROM proveedores_sql"
+                sql_lim = "SELECT * FROM proveedores_sql LIMIT %s OFFSET %s"
+                cur.execute(sql_count)
+                total_items = cur.fetchone()[0]
+                cur.execute(sql_lim, (per_page, (page - 1) * per_page))
 
-        proveedores = cur.fetchall()
-        total_pages = (total_items + per_page - 1) // per_page
-        cur.close()
-        conn.close()
+            proveedores = cur.fetchall()
+            total_pages = (total_items + per_page - 1) // per_page
+        except psycopg2.Error as e:
+            flash(f'Error al ejecutar la consulta: {e}')
+            return redirect(url_for('index'))
+        finally:
+            cur.close()
+            conn.close()
+
         return render_template('proveedores.html', proveedores=proveedores, search_query=search_query, page=page, per_page=per_page, total_items=total_items, total_pages=total_pages)
     else:
         flash('Error al conectar a la base de datos.')
         return redirect(url_for('index'))
 
-
-    
 @app.route('/proveedores/crear')
 @login_required
 def proveedores_crear():
     conn = get_db_connection()
     if conn:
-        cur = conn.cursor()
-        sql='SELECT id_producto, nombre FROM productos'
-        cur.execute(sql)
-        productos = cur.fetchall()
-        cur.close()
-        conn.close()
-        return render_template ('proveedores_crear.html', productos=productos)
+        try:
+            cur = conn.cursor()
+            sql = 'SELECT id_producto, nombre FROM productos'
+            cur.execute(sql)
+            productos = cur.fetchall()
+        except psycopg2.Error as e:
+            flash(f'Error al ejecutar la consulta: {e}')
+            return redirect(url_for('proveedores'))
+        finally:
+            cur.close()
+            conn.close()
+
+        return render_template('proveedores_crear.html', productos=productos)
     else:
         flash('Error al conectar a la base de datos.')
         return redirect(url_for('index'))
 
-@app.route('/proveedores/nuevo', methods =['GET', 'POST'])    
+@app.route('/proveedores/nuevo', methods=['POST'])    
 @login_required
 def proveedores_nuevo():
-    if request.method=='POST':
-        contacto=request.form['contacto']
-        diaPedido=request.form['diaPedido']
-        diaEntrega=request.form['diaEntrega']
-        totalPago=float(request.form['totalPago'])
-        producto=int(request.form['producto'])
-        cantidad=(request.form['cantidadProducto'])
-        
-        conn=get_db_connection()
-        cur=conn.cursor()
-        cur.execute ('INSERT INTO proveedores (contacto, dia_pedido, dia_entrega, total_pagado, id_producto, cantidad_entregada) VALUES (%s, %s, %s, %s, %s, %s)',
-                    (contacto, diaPedido, diaEntrega, totalPago, producto, cantidad))
-        conn.commit()
-        cur.close()
-        conn.close() 
-        
-        flash('¡Proveedor agregado de manera correcta!')
+    if request.method == 'POST':
+        contacto = request.form['contacto']
+        diaPedido = request.form['diaPedido']
+        diaEntrega = request.form['diaEntrega']
+        totalPago = float(request.form['totalPago'])
+        producto = int(request.form['producto'])
+        cantidad = int(request.form['cantidadProducto'])  # Asegúrate de convertir a int
+
+        conn = get_db_connection()
+        if conn:
+            try:
+                cur = conn.cursor()
+                cur.execute('''INSERT INTO proveedores 
+                               (contacto, dia_pedido, dia_entrega, total_pagado, id_producto, cantidad_entregada) 
+                               VALUES (%s, %s, %s, %s, %s, %s)''',
+                            (contacto, diaPedido, diaEntrega, totalPago, producto, cantidad))
+                conn.commit()
+                flash('¡Proveedor agregado de manera correcta!')
+            except psycopg2.Error as e:
+                flash(f'Error al insertar en la base de datos: {e}')
+            finally:
+                cur.close()
+                conn.close()
+        else:
+            flash('Error al conectar a la base de datos.')
+
         return redirect(url_for('proveedores'))
-
     else:
-
         flash('Error al crear el nuevo proveedor')
         return redirect(url_for('proveedores'))
 
 @app.route('/proveedores/detalles/<string:id>', methods=['GET', 'POST'])
 @login_required
 def proveedores_detalles(id):
-    titulo= 'Detalles de proveedor'
-    conn=get_db_connection()
-    cur=conn.cursor()
-    cur.execute('SELECT * FROM proveedores WHERE id_proveedor=%s',(id,))
-    proveedores=cur.fetchall()
-    cur.execute('SELECT id_producto, nombre FROM productos')
-    productos=cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('proveedores_detalles.html', titulo=titulo, proveedores=proveedores[0], productos=productos)
+    conn = get_db_connection()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM proveedores WHERE id_proveedor=%s', (id,))
+            proveedores = cur.fetchone()
+            cur.execute('SELECT id_producto, nombre FROM productos')
+            productos = cur.fetchall()
+        except psycopg2.Error as e:
+            flash(f'Error al ejecutar la consulta: {e}')
+            return redirect(url_for('proveedores'))
+        finally:
+            cur.close()
+            conn.close()
+
+        return render_template('proveedores_detalles.html', titulo='Detalles de proveedor', proveedores=proveedores, productos=productos)
+    else:
+        flash('Error al conectar a la base de datos.')
+        return redirect(url_for('proveedores'))
 
 @app.route('/proveedores/editar/<string:id>')
-@login_required
 def proveedores_editar(id):
-    titulo= 'Detalles del proveedor'
-    conn=get_db_connection()
-    cur=conn.cursor()
-    cur.execute('SELECT * FROM proveedores WHERE id_proveedor=%s',(id,))
-    proveedores=cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
-    return render_template('proveedores_detalles.html', titulo=titulo, proveedores=proveedores)
+    conn = get_db_connection()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM proveedores WHERE id_proveedor=%s', (id,))
+            proveedores = cur.fetchone()
+        except psycopg2.Error as e:
+            flash(f'Error al ejecutar la consulta: {e}')
+            return redirect(url_for('proveedores'))
+        finally:
+            cur.close()
+            conn.close()
 
-@app.route('/proveedores/actualizar/<string:id>', methods =['GET', 'POST'])
+        return render_template('proveedores_detalles.html', titulo='Detalles del proveedor', proveedores=proveedores)
+    else:
+        flash('Error al conectar a la base de datos.')
+        return redirect(url_for('proveedores'))
+
+@app.route('/proveedores/actualizar/<string:id>', methods=['POST'])
 @login_required
 def proveedores_actualizar(id):
     if request.method == 'POST':
-        contacto=request.form['contacto']
-        diaPedido=request.form['diaPedido']
-        diaEntrega=request.form['diaEntrega']
-        totalPago=request.form['totalPago']
-        producto=request.form['producto']
-        cantidad=request.form['cantidad']
-        conn=get_db_connection()
-        cur=conn.cursor()
-        sql='UPDATE proveedores SET contacto=%s, dia_pedido=%s, dia_entrega=%s, total_pagado=%s, id_producto=%s, cantidad_entregada=%s WHERE id_proveedor=%s'
-        values=(contacto, diaPedido, diaEntrega, totalPago, producto, cantidad, id)
-        cur.execute(sql, values)
-        conn.commit()
-        cur.close()
-        conn.close()
-        flash ('¡Proveedor editado de manera correcta!')
-        return redirect (url_for('proveedores'))
-    else:
-        flash('Error al hacer la edición de pedido')
+        contacto = request.form['contacto']
+        diaPedido = request.form['diaPedido']
+        diaEntrega = request.form['diaEntrega']
+        totalPago = request.form['totalPago']
+        producto = request.form['producto']
+        cantidad = request.form['cantidad']
+
+        conn = get_db_connection()
+        if conn:
+            try:
+                cur = conn.cursor()
+                sql = '''UPDATE proveedores 
+                         SET contacto=%s, dia_pedido=%s, dia_entrega=%s, total_pagado=%s, id_producto=%s, cantidad_entregada=%s 
+                         WHERE id_proveedor=%s'''
+                values = (contacto, diaPedido, diaEntrega, totalPago, producto, cantidad, id)
+                cur.execute(sql, values)
+                conn.commit()
+                flash('¡Proveedor editado de manera correcta!')
+            except psycopg2.Error as e:
+                flash(f'Error al actualizar en la base de datos: {e}')
+            finally:
+                cur.close()
+                conn.close()
+        else:
+            flash('Error al conectar a la base de datos.')
+
         return redirect(url_for('proveedores'))
 
 @app.route('/proveedores/eliminar/<string:id>', methods=['POST'])
 @login_required
 def proveedores_eliminar(id):
-    conn=get_db_connection()
-    cur=conn.cursor()
-    sql='DELETE FROM proveedores WHERE id_proveedor=%s'
-    values=(id,)
-    cur.execute(sql, values)
-    conn.commit()
-    cur.close()
-    conn.close()
-    flash('¡Proveedor eliminado de manera correcta!')
-    return redirect(url_for('proveedores'))
+    conn = get_db_connection()
+    if conn:
+        try:
+            cur = conn.cursor()
+            sql = 'DELETE FROM proveedores WHERE id_proveedor=%s'
+            cur.execute(sql, (id,))
+            conn.commit()
+            flash('¡Proveedor eliminado de manera correcta!')
+        except psycopg2.Error as e:
+            flash(f'Error al eliminar en la base de datos: {e}')
+        finally:
+            cur.close()
+            conn.close()
+
+        return redirect(url_for('proveedores'))
+    else:
+        flash('Error al conectar a la base de datos.')
+        return redirect(url_for('proveedores'))
 
 @app.route('/categorias')
 @login_required
@@ -537,9 +585,10 @@ def categorias_editar(id):
     conn.close()
     return render_template ('categorias_detalles.html', titulo=titulo, categoria=categorias)
 
-@app.route('/categorias/actualizar/<string:id>', methods=['GET, POST'])
+@app.route('/categorias/actualizar/<string:id>', methods=['POST'])
 @login_required
 def categorias_actualizar(id):
+    print("hola 1")
     if request.method=='POST':
         nombre=request.form['nombre_categoria']
         conn=get_db_connection()
@@ -550,6 +599,8 @@ def categorias_actualizar(id):
         conn.commit()
         cur.close()
         conn.close()
+        print("Hola 2")
+        print("nombre")
         flash('¡Categoria editada de manera correcta!')
         return redirect(url_for('categorias'))
     else:
@@ -706,10 +757,11 @@ def usuarios_actualizar(id):
 @app.route('/usuarios/eliminar/<string:id>', methods=['POST'])
 @login_required
 def usuarios_eliminar(id):
+    activo=False
     conn=get_db_connection()
     cur=conn.cursor()
-    sql='DELETE FROM usuarios WHERE id_usuario=%s'
-    values=(id,)
+    sql='UPDATE usuarios SET activo=%s WHERE id_usuario=%s'
+    values=(activo,id,)
     cur.execute(sql, values)
     conn.commit()
     cur.close()
@@ -803,6 +855,54 @@ def ventas_crear():
 
     return redirect(url_for('ventas'))
 
+@app.route('/ventas/detalle/<int:id_venta>')
+@login_required
+def venta_detalle(id_venta):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Obtener los detalles de la venta
+    cur.execute("""
+        SELECT v.id_venta, v.fecha_hora, v.total_venta, v.id_usuario, v.producto_mostrar
+        FROM ventas v
+        WHERE v.id_venta = %s
+    """, (id_venta,))
+    venta = cur.fetchone()
+
+    # Obtener los detalles de los productos en la venta
+    cur.execute("""
+        SELECT d.fk_producto, p.nombre, d.precio, d.cantidad
+        FROM detalles_venta d
+        JOIN productos_sql p ON d.fk_producto = p.id_producto
+        WHERE d.fk_venta = %s
+    """, (id_venta,))
+    productos_detalle = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template('ventas_detalles.html', 
+                           venta=venta, 
+                           productos_detalle=productos_detalle)
+
+@app.route('/ventas/quitar_producto', methods=['POST'])
+@login_required
+def quitar_producto():
+    id_producto = request.form.get('id_producto')
+    carrito = session.get('carrito', [])
+
+    if id_producto:
+        try:
+            id_producto = int(id_producto)
+            carrito = [p for p in carrito if p['id_producto'] != id_producto]
+            session['carrito'] = carrito
+            flash("Producto quitado del carrito", "success")
+        except ValueError:
+            flash("ID de producto inválido", "error")
+
+    return redirect(url_for('ventas_nuevo'))
+
+
 @app.route('/ventas/agregar_producto', methods=['POST'])
 @login_required
 def agregar_producto():
@@ -832,22 +932,8 @@ def agregar_producto():
 
     return redirect(url_for('ventas_nuevo'))
 
-@app.route('/ventas/quitar_producto', methods=['POST'])
-@login_required
-def quitar_producto():
-    id_producto = request.form.get('id_producto')
-    carrito = session.get('carrito', [])
 
-    if id_producto:
-        try:
-            id_producto = int(id_producto)
-            carrito = [p for p in carrito if p['id_producto'] != id_producto]
-            session['carrito'] = carrito
-            flash("Producto quitado del carrito", "success")
-        except ValueError:
-            flash("ID de producto inválido", "error")
 
-    return redirect(url_for('ventas_nuevo'))
 
 
 def lista_productos():
@@ -893,8 +979,7 @@ def detalle_venta(id_venta):
 
 
 
-
-if __name__ == '__main__':
+if __name__ == '_main_':
     csrf.init_app(app)
     app.register_error_handler(404, pagina_no_encontrada)
     app.register_error_handler(401, pagina_no_encontrada)

@@ -89,7 +89,7 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item active">
-                    <a class="nav-link" href="{{ url_for('index') }}">Inicio <span class="sr-only">(current)</span></a>
+                    <a class="nav-link" href="{{ url_for('index') }}">Home <span class="sr-only">(current)</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('productos') }}">Productos</a>
@@ -116,7 +116,7 @@
 
     <div class="container">
         <h2>Edición de Categoría</h2>
-        <form action="{{ url_for('categorias_editar', id=categoria.id) }}" method="post">
+        <form action="{{ url_for('categorias_actualizar', id=categoria.0) }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="nombre_categoria">Nombre de la Categoría:</label>
